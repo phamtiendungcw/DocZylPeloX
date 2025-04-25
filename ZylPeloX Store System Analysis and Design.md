@@ -1,10 +1,12 @@
-# 📑 Yêu cầu chi tiết dự án ZylPeloXStore (ZPX) - VERSION 1.0
+# 📑 Phân tích và Thiết kế Hệ thống ZylPeloXStore (ZPX) - VERSION 1.0
 
 **Mã dự án:** ZPX-ECOM
 **Ngày khởi tạo:** 10-02-2023
 **Ngày cập nhật:** 14-04-2025
 **Tác giả:** phamtiendungcw
 **Phiên bản:** 1.0
+
+---
 
 ## 1. 🎯 TỔNG QUAN DỰ ÁN
 
@@ -32,7 +34,9 @@ Xây dựng nền tảng cửa hàng bán lẻ trực tuyến ZylPeloXStore (ZPX
 
 > **_Chú thích:_** _Các giới hạn được xác định để đặt kỳ vọng rõ ràng và đảm bảo việc lập kế hoạch tài nguyên phù hợp._
 
-## 2. 🛍️ TÍNH NĂNG HỆ THỐNG
+---
+
+## 2. 🛍️ YÊU CẦU CHỨC NĂNG (TÍNH NĂNG HỆ THỐNG)
 
 ### 2.1. Quản lý Catalog
 
@@ -138,20 +142,24 @@ Xây dựng nền tảng cửa hàng bán lẻ trực tuyến ZylPeloXStore (ZPX
 
 > **_Chú thích:_** _Hệ thống phân quyền sẽ được thiết kế để linh hoạt và chi tiết, cho phép tạo các vai trò tùy chỉnh theo nhu cầu cụ thể của doanh nghiệp._
 
+---
+
 ## 3. 🛠️ KIẾN TRÚC & CÔNG NGHỆ
 
 ### 3.1. Stack Công nghệ
 
-- **Backend**: ASP.NET Core 6 (với khả năng nâng cấp lên phiên bản mới nhất)
-- **Frontend**: Angular 16 (với tên project "zpx-ui" theo chuẩn kebab-case)
-- **Database**: SQL Server (hỗ trợ phân vùng cho hiệu suất cao)
-- **Cache**: Redis + HybridCache (kết hợp memory cache và distributed cache)
-- **Search**: Elasticsearch (tùy chọn, để tối ưu hóa tìm kiếm)
-- **Message Queue**: RabbitMQ (tùy chọn, cho xử lý bất đồng bộ)
+- **Backend**: ASP.NET Core 6+
+- **Frontend**: Angular 16+ (project `zpx-ui`)
+- **Database**: SQL Server
+- **Cache**: Redis + HybridCache (In-Memory + Distributed)
+- **Search (Optional)**: Elasticsearch
+- **Message Queue (Optional)**: RabbitMQ
 
-> **_Chú thích:_** _Stack công nghệ được chọn để đảm bảo hiệu suất cao, bảo mật và khả năng mở rộng. Các công nghệ này có cộng đồng lớn và hỗ trợ dài hạn._
+> **_Chú thích:_** _Stack được chọn để đảm bảo hiệu suất, bảo mật, khả năng mở rộng và hỗ trợ cộng đồng tốt._
 
 ### 3.2. Kiến trúc Phần mềm
+
+#### 3.2.1. Nguyên tắc cốt lõi
 
 - **Clean Architecture**
   - Domain-centric: Đặt logic nghiệp vụ ở trung tâm
@@ -174,7 +182,87 @@ Xây dựng nền tảng cửa hàng bán lẻ trực tuyến ZylPeloXStore (ZPX
 
 > **_Chú thích:_** _Modular Monolith là lựa chọn cân bằng giữa tính đơn giản của monolith và tính linh hoạt của microservices._
 
-### 3.3. Design Patterns
+#### 3.2.2. Sơ đồ Kiến trúc Tổng thể
+
+```mermaid
+---
+title: Tổng thể kiến trúc hệ thống ZPX
+---
+flowchart LR
+    %% Define Nodes
+    subgraph UserFacing ["User Facing"]
+        direction LR
+        USERS["Users<br/>(Web/Mobile)"]
+        FRONTEND["zpx-ui<br><span style='font-size:small; opacity:0.8;'>Angular SPA</span>"]
+        GATEWAY["API Gateway<br><span style='font-size:small; opacity:0.8;'>Optional</span>"]
+    end
+
+    subgraph BackendServices ["Backend Services (ZPX System)"]
+        direction TB
+        API["ZPX.Server<br/><span style='font-size:small; opacity:0.8;'>ASP.NET Core API</span>"]
+        APP["ZPX.Application<br/><span style='font-size:small; opacity:0.8;'>Business Logic, CQRS</span>"]
+        DOMAIN["ZPX.Domain<br/><span style='font-size:small; opacity:0.8;'>Entities, Core Logic</span>"]
+        INFRA["ZPX.Infrastructure<br/><span style='font-size:small; opacity:0.8;'>Implementation Details</span>"]
+    end
+
+    subgraph ExternalDependencies ["External Dependencies"]
+        direction TB
+        subgraph Persistence ["Persistence"]
+            DB[(SQL Server)]
+            CACHE[(Redis Cache)]
+            SEARCH[(Elasticsearch)]
+        end
+        subgraph Messaging ["Messaging"]
+             MQ[(RabbitMQ)]
+        end
+        subgraph ThirdParty ["3rd Party Services"]
+             direction TB
+             PAYMENT[Payment Service]
+             SHIPPING[Shipping Service]
+             EMAIL[Email Service]
+             OTHER[...]
+        end
+    end
+
+    %% Define Connections (Following Clean Architecture Dependencies)
+    USERS      --> FRONTEND
+    FRONTEND   --> GATEWAY
+    GATEWAY    --> API
+
+    API        --> APP
+    APP        --> DOMAIN
+    APP        --> INFRA
+
+    INFRA      --> DB
+    INFRA      --> CACHE
+    INFRA      --> SEARCH
+    INFRA      --> MQ
+    INFRA      -.-> PAYMENT
+    INFRA      -.-> SHIPPING
+    INFRA      -.-> EMAIL
+    INFRA      -.-> OTHER
+
+    %% Styling (Optional - makes it visually distinct)
+    classDef user fill:#f0f9ff,stroke:#0ea5e9,stroke-width:1px,color:#0369a1;
+    classDef backend fill:#fdf2f8,stroke:#db2777,stroke-width:1px,color:#831843;
+    classDef external fill:#fefce8,stroke:#ca8a04,stroke-width:1px,color:#713f12;
+    classDef db fill:#eff6ff,stroke:#60a5fa,stroke-width:1.5px,color:#1e40af;
+    classDef thirdparty fill:#fffbeb,stroke:#f59e0b,stroke-width:1.5px,color:#78350f;
+
+    class USERS,FRONTEND,GATEWAY user;
+    class API,APP,DOMAIN,INFRA backend;
+    class DB,CACHE,SEARCH,MQ db;
+    class PAYMENT,SHIPPING,EMAIL,OTHER thirdparty;
+
+    style UserFacing fill:none,stroke:#0ea5e9,stroke-dasharray: 5 5;
+    style BackendServices fill:none,stroke:#db2777,stroke-dasharray: 5 5;
+    style ExternalDependencies fill:none,stroke:#ca8a04,stroke-dasharray: 5 5;
+    style Persistence fill:none,stroke:#60a5fa,stroke-width:1px;
+    style Messaging fill:none,stroke:#60a5fa,stroke-width:1px;
+    style ThirdParty fill:none,stroke:#f59e0b,stroke-width:1px;
+```
+
+### 3.3. Design Patterns Chính
 
 - **CQRS với MediatR**
   - Commands (Write): Thay đổi trạng thái hệ thống
@@ -195,7 +283,7 @@ Xây dựng nền tảng cửa hàng bán lẻ trực tuyến ZylPeloXStore (ZPX
 
 > **_Chú thích:_** _Domain Events cho phép các phần khác nhau của hệ thống phản ứng với những thay đổi mà không cần kết nối trực tiếp, giúp giảm sự phụ thuộc._
 
-### 3.4. Packages & Libraries
+### 3.4. Packages & Libraries Chính
 
 #### 3.4.1. Backend (.NET)
 
@@ -221,121 +309,7 @@ Xây dựng nền tảng cửa hàng bán lẻ trực tuyến ZylPeloXStore (ZPX
 
 > **_Chú thích:_** _Các thư viện frontend được chọn để cung cấp trải nghiệm người dùng nhất quán và hiệu suất cao._
 
-## 4. 🧩 THIẾT KẾ DOMAIN
-
-### 4.1. Entities & Base Classes
-
-- **BaseEntity**
-
-    ```csharp
-    public abstract class BaseEntity
-    {
-        public Guid Id { get; protected set; }
-    }
-    ```
-
-> **_Chú thích:_** _BaseEntity là lớp cơ sở cho tất cả các entity, định nghĩa một khóa chính dạng GUID._
-
-- **BaseAuditableEntity**
-
-    ```csharp
-    public abstract class BaseAuditableEntity : BaseEntity
-    {
-        public DateTime CreatedAt { get; set; }
-        public string CreatedBy { get; set; }
-        public DateTime? LastModifiedAt { get; set; }
-        public string LastModifiedBy { get; set; }
-        public bool IsDeleted { get; set; }
-        public DateTime? DeletedAt { get; set; }
-        public string DeletedBy { get; set; }
-    }
-    ```
-
-> **_Chú thích:_** _BaseAuditableEntity mở rộng từ BaseEntity, thêm các trường theo dõi thời gian tạo, cập nhật và xóa mềm (soft delete)._
-
-### 4.2. Aggregate Roots
-
-- **Product Aggregate**
-  - Product (Aggregate Root): Thông tin cơ bản về sản phẩm
-  - ProductVariant: Các biến thể của sản phẩm (màu sắc, kích cỡ,...)
-  - ProductAttribute: Thuộc tính sản phẩm (như chất liệu, xuất xứ,...)
-  - ProductImage: Hình ảnh sản phẩm
-  - ProductSpecification: Thông số kỹ thuật chi tiết
-
-> **_Chú thích:_** _Product Aggregate chứa tất cả các thông tin liên quan đến sản phẩm và được quản lý như một đơn vị nhất quán._
-
-- **Order Aggregate**
-  - Order (Aggregate Root): Thông tin đơn hàng
-  - OrderItem: Các sản phẩm trong đơn hàng
-  - OrderStatus: Trạng thái của đơn hàng
-  - OrderPayment: Thông tin thanh toán
-  - ShippingDetails: Chi tiết vận chuyển
-
-> **_Chú thích:_** _Order Aggregate đại diện cho toàn bộ quá trình đặt hàng, từ sản phẩm đến thanh toán và vận chuyển._
-
-- **Customer Aggregate**
-  - Customer (Aggregate Root): Thông tin khách hàng
-  - Address: Địa chỉ giao hàng/thanh toán
-  - PaymentMethod: Phương thức thanh toán lưu trữ
-  - CustomerGroup: Nhóm khách hàng
-  - CustomerNote: Ghi chú về khách hàng
-
-> **_Chú thích:_** _Customer Aggregate quản lý tất cả thông tin liên quan đến khách hàng và tương tác của họ với hệ thống._
-
-- **Inventory Aggregate**
-  - Inventory (Aggregate Root): Quản lý tồn kho
-  - StockItem: Mặt hàng trong kho
-  - StockTransaction: Giao dịch nhập/xuất kho
-  - Warehouse: Thông tin kho hàng
-  - Location: Vị trí trong kho
-
-> **_Chú thích:_** _Inventory Aggregate quản lý tất cả các khía cạnh của việc theo dõi tồn kho._
-
-- **Promotion Aggregate**
-  - Promotion (Aggregate Root): Thông tin khuyến mãi
-  - DiscountRule: Quy tắc giảm giá
-  - Coupon: Mã giảm giá
-  - PromotionUsage: Lịch sử sử dụng khuyến mãi
-
-> **_Chú thích:_** _Promotion Aggregate quản lý các chiến dịch khuyến mãi và việc áp dụng chúng._
-
-### 4.3. Junction/Intermediate Entities
-
-- **ProductCategory** (many-to-many): Kết nối Product và Category
-- **ProductTag** (many-to-many): Kết nối Product và Tag
-- **OrderDiscount** (many-to-many): Kết nối Order và Discount
-- **CustomerPromotion** (many-to-many): Kết nối Customer và Promotion
-
-> **_Chú thích:_** _Các entity này quản lý mối quan hệ nhiều-nhiều giữa các entity chính._
-
-### 4.4. Value Objects
-
-- **Money**: Giá trị tiền tệ (Amount + Currency)
-- **Address**: Thông tin địa chỉ
-- **DateRange**: Khoảng thời gian
-- **ContactInformation**: Thông tin liên lạc
-
-> **_Chú thích:_** _Value Objects là các đối tượng không có nhận dạng riêng, được định nghĩa bởi các thuộc tính và bất biến (immutable)._
-
-### 4.5. Domain Services
-
-- **OrderProcessingService**: Xử lý logic phức tạp liên quan đến đơn hàng
-- **PricingService**: Tính toán giá dựa trên nhiều yếu tố
-- **InventoryService**: Quản lý logic cập nhật tồn kho
-- **PaymentProcessingService**: Xử lý giao dịch thanh toán
-
-> **_Chú thích:_** _Domain Services chứa logic nghiệp vụ phức tạp không thuộc về một entity cụ thể nào._
-
-### 4.6. Domain Events
-
-- **OrderPlacedEvent**: Phát ra khi đơn hàng được đặt
-- **PaymentReceivedEvent**: Phát ra khi nhận được thanh toán
-- **ProductOutOfStockEvent**: Phát ra khi sản phẩm hết hàng
-- **CustomerRegisteredEvent**: Phát ra khi khách hàng đăng ký mới
-
-> **_Chú thích:_** _Domain Events cho phép các phần khác nhau của hệ thống phản ứng với những thay đổi quan trọng._
-
-## 5. 📁 CẤU TRÚC SOLUTION
+### 3.5. Cấu trúc Solution
 
 ```plaintext
 📁 ZylPeloXStore
@@ -417,523 +391,386 @@ Xây dựng nền tảng cửa hàng bán lẻ trực tuyến ZylPeloXStore (ZPX
      └── 📁 ZPX.E2ETests               // End-to-end tests
 ```
 
-> **_Chú thích:_** _Cấu trúc solution tuân theo nguyên tắc của Clean Architecture, với các layer rõ ràng và sự phụ thuộc đi từ ngoài vào trong. Dự án frontend được đổi tên từ ZPX.WebClient thành zpx-ui để tuân theo quy ước đặt tên của Angular._
+> _**Chú thích:**_ _Cấu trúc tuân theo Clean Architecture, phụ thuộc hướng vào Core._
 
-## 6. 📝 APPLICATION LAYER DETAILS
+---
 
-### 6.1. CQRS Implementation
+## 4. 🧩 THIẾT KẾ CHI TIẾT
 
-- **Commands** (Write operations)
-  - CreateProductCommand: Tạo sản phẩm mới
-  - UpdateProductCommand: Cập nhật thông tin sản phẩm
-  - DeleteProductCommand: Xóa sản phẩm (soft delete)
+### 4.1. Domain Design
 
-> **_Chú thích:_** _Commands đại diện cho các thao tác thay đổi trạng thái hệ thống, trả về kết quả thành công/thất bại._
+- **Entities & Base Classes**: `BaseEntity` (Guid Id), `BaseAuditableEntity` (thêm CreatedAt, CreatedBy, LastModifiedAt, LastModifiedBy, IsDeleted...).
+- **Aggregate Roots**: Product, Order, Customer, Inventory, Promotion (quản lý các entity liên quan như một đơn vị nhất quán).
+- **Junction/Intermediate Entities**: ProductCategory, ProductTag, OrderDiscount... (quản lý quan hệ N-N).
+- **Value Objects**: Money, Address, DateRange, ContactInformation... (bất biến, định nghĩa bởi thuộc tính).
+- **Domain Services**: OrderProcessingService, PricingService... (chứa logic nghiệp vụ phức tạp không thuộc entity nào).
+- **Domain Events**: OrderPlacedEvent, PaymentReceivedEvent... (thông báo các thay đổi quan trọng).
 
-- **Queries** (Read operations)
-  - GetProductsQuery: Lấy danh sách sản phẩm có phân trang
-  - GetProductByIdQuery: Lấy chi tiết sản phẩm theo ID
-  - SearchProductsQuery: Tìm kiếm sản phẩm với các điều kiện phức tạp
+### 4.2. Application Layer Details
 
-> **_Chú thích:_** _Queries chỉ đọc dữ liệu, không thay đổi trạng thái và được tối ưu hóa cho hiệu suất đọc._
+- **CQRS Implementation**: Commands (CreateProductCommand...), Queries (GetProductsQuery...), Handlers tương ứng.
+- **DTOs & Mapping**: Request DTOs (CreateProductRequest...), Response DTOs (ProductDto...), Mapping Profiles (AutoMapper).
+- **Validation**: Validators (CreateProductValidator...) với FluentValidation, Validation Behavior (MediatR Pipeline).
+- **Application Services Interfaces**: IEmailService, IFileStorageService, ICacheService... (định nghĩa contracts cho infrastructure).
 
-- **Command/Query Handlers**
-  - CreateProductCommandHandler: Xử lý logic tạo sản phẩm
-  - GetProductsQueryHandler: Xử lý logic lấy danh sách sản phẩm
-  - etc.
+### 4.3. API Design & Endpoints
 
-> **_Chú thích:_** _Mỗi command/query có một handler tương ứng, giúp tách biệt logic xử lý và dễ dàng thêm middleware._
+- **Nguyên tắc RESTful**: Resource-based URLs, HTTP methods đúng, status codes phù hợp, hỗ trợ Paging/Filtering/Sorting.
+- **API Versioning**: URL-based (`/api/v1/...`).
+- **API Documentation**: Tích hợp Swagger/OpenAPI, ví dụ request/response, changelog.
+- **Controller Example**:
 
-### 6.2. DTOs & Mapping
+  ```csharp
+  [ApiController]
+  [Route("api/v1/[controller]")]
+  public class ProductsController : ControllerBase // Kế thừa từ ControllerBase hoặc BaseApiController tùy chỉnh
+  {
+      private readonly IMediator _mediator; // Hoặc ISender/IPublisher
 
-- **Request DTOs**
-  - CreateProductRequest: DTO cho yêu cầu tạo sản phẩm
-  - UpdateProductRequest: DTO cho yêu cầu cập nhật sản phẩm
-  - etc.
+      public ProductsController(IMediator mediator) => _mediator = mediator;
 
-> **_Chú thích:_** _Request DTOs định nghĩa dữ liệu đầu vào từ client, thường được sử dụng làm tham số cho Commands._
+      [HttpGet]
+      [ProducesResponseType(typeof(PaginatedList<ProductDto>), StatusCodes.Status200OK)]
+      public async Task<IActionResult> GetProducts([FromQuery] GetProductsQuery query)
+      {
+          var result = await _mediator.Send(query);
+          // Có thể thêm xử lý lỗi chung hoặc trả về Ok trực tiếp nếu dùng middleware/filter
+          return Ok(result);
+      }
 
-- **Response DTOs**
-  - ProductDto: DTO trả về thông tin cơ bản về sản phẩm
-  - ProductDetailDto: DTO trả về thông tin chi tiết về sản phẩm
-  - OrderDto: DTO trả về thông tin về đơn hàng
-  - etc.
+      // ... các endpoints khác (GET by Id, POST, PUT, DELETE) với xử lý lỗi và trả về ActionResult phù hợp
+  }
+  ```
 
-> **_Chú thích:_** _Response DTOs định nghĩa dữ liệu trả về cho client, tách biệt với domain model nội bộ._
+### 4.4. Database Design
 
-- **Mapping Profiles**
-  - ProductMappingProfile: Cấu hình mapping giữa Product và ProductDto
-  - OrderMappingProfile: Cấu hình mapping giữa Order và OrderDto
-  - etc.
+#### 4.4.1. Tổng quan Schema
 
-> **_Chú thích:_** _Mapping Profiles định nghĩa cách chuyển đổi giữa domain models và DTOs, sử dụng AutoMapper._
+- Nhóm bảng liên quan đến Product (Products, Categories, Brands, ProductImages...).
+- Nhóm bảng liên quan đến Order (Orders, OrderItems, OrderStatuses...).
+- Nhóm bảng liên quan đến Customer (Customers, Addresses...).
+- Nhóm bảng Inventory (Inventory, Warehouses, InventoryHistory...).
+- Nhóm bảng Identity (AspNetUsers, AspNetRoles...).
+- Nhóm bảng Marketing (Discounts...).
+- Nhóm bảng Reviews (ProductReviews...).
+- Bảng trung gian (Junction tables).
 
-### 6.3. Validation
+#### 4.4.2. Sơ đồ Quan hệ Thực thể (ERD)
 
-- **Validators**
-  - CreateProductValidator: Xác thực dữ liệu tạo sản phẩm
-  - UpdateProductValidator: Xác thực dữ liệu cập nhật sản phẩm
-  - etc.
+```mermaid
+---
+title: ERD (Entity Relationship Diagram) cho database
+---
 
-> **_Chú thích:_** _Validators sử dụng FluentValidation để định nghĩa các quy tắc xác thực cho dữ liệu đầu vào._
+erDiagram
+    CUSTOMER ||--o{ ORDER : places
+    CUSTOMER ||--o{ ADDRESS : has
+    PRODUCT ||--o{ PRODUCT_VARIANT : has
+    PRODUCT }o--o{ PRODUCT_CATEGORY : "in (via junction)"
+    %% Many-to-Many requires junction table PRODUCT_CATEGORY
+    CATEGORY }o--o{ PRODUCT_CATEGORY : "contains (via junction)"
 
-- **Validation Behavior**
-  - Implement MediatR Pipeline Behavior for validation
+    ORDER ||--o{ ORDER_ITEM : includes
+    PRODUCT_VARIANT ||--o{ ORDER_ITEM : ordered
 
-> **_Chú thích:_** _Validation Behavior đảm bảo tất cả các requests được xác thực trước khi xử lý, tập trung hóa logic validation._
-
-### 6.4. Application Services
-
-- **Email Service**: Gửi email thông báo, xác nhận đơn hàng
-- **File Storage Service**: Upload và quản lý hình ảnh sản phẩm
-- **Cache Service**: Caching dữ liệu thường xuyên truy cập
-- **Message Service**: Gửi thông báo qua message queue
-
-> **_Chú thích:_** _Application Services cung cấp các chức năng hỗ trợ cho application layer, thường là wrapper cho các dịch vụ cơ sở hạ tầng._
-
-## 7. 🌐 API DESIGN & ENDPOINTS
-
-### 7.1. RESTful API Principles
-
-- **Resource-based URLs**: URLs đại diện cho resources, không phải actions
-- **HTTP methods**: Sử dụng GET, POST, PUT, DELETE đúng cách
-- **Proper status codes**: Trả về HTTP status codes phù hợp (200, 201, 400, 404, 500, etc.)
-- **Paging, filtering, sorting**: Cung cấp khả năng phân trang, lọc và sắp xếp dữ liệu
-
-> **_Chú thích:_** _API được thiết kế theo nguyên tắc RESTful để đảm bảo tính nhất quán và dễ sử dụng._
-
-### 7.2. API Versioning
-
-- **URL-based versioning**: `/api/v1/products`
-
-> **_Chú thích:_** _Versioning giúp đảm bảo tính tương thích ngược khi API thay đổi._
-
-### 7.3. API Documentation
-
-- **Swagger/OpenAPI integration**: Tài liệu API tự động
-- **Documented examples**: Ví dụ request/response
-- **API changelog**: Theo dõi thay đổi giữa các phiên bản API
-
-> **_Chú thích:_** _Tài liệu API chi tiết giúp các nhà phát triển dễ dàng tích hợp với hệ thống._
-
-### 7.4. Controller Examples
-
-```csharp
-[ApiController]
-[Route("api/v1/[controller]")]
-public class ProductsController : ControllerBase
-{
-    private readonly IMediator _mediator;
-
-    public ProductsController(IMediator mediator)
-    {
-        _mediator = mediator;
+    CUSTOMER {
+      GUID Id PK "Primary Key"
+      string Name
+      string Email "Unique identifier"
+      datetime CreatedAt
+      datetime UpdatedAt
     }
-
-    [HttpGet]
-    public async Task<ActionResult<PaginatedList<ProductDto>>> GetProducts([FromQuery] GetProductsQuery query)
-    {
-        var result = await _mediator.Send(query);
-        return Ok(result);
+    ADDRESS {
+      GUID Id PK
+      GUID CustomerId FK "Links to CUSTOMER"
+      string Line1
+      string Line2 "Optional"
+      string City
+      string PostalCode
+      string Country
+      bool IsDefault
     }
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<ProductDetailDto>> GetProductById(Guid id)
-    {
-        var result = await _mediator.Send(new GetProductByIdQuery(id));
-        return result.Match<ActionResult>(
-            success => Ok(success),
-            error => NotFound()
-        );
+    PRODUCT {
+      GUID Id PK
+      string Name
+      string Description "Optional"
+      string SKU "Base SKU"
+      decimal Price "Default price if no variants"
+      datetime CreatedAt
+      datetime UpdatedAt
     }
-
-    [HttpPost]
-    public async Task<ActionResult<ProductDto>> CreateProduct(CreateProductRequest request)
-    {
-        var result = await _mediator.Send(new CreateProductCommand(request));
-        return result.Match<ActionResult>(
-            success => CreatedAtAction(nameof(GetProductById), new { id = success.Id }, success),
-            error => BadRequest(error.Reasons)
-        );
+    PRODUCT_VARIANT {
+      GUID Id PK
+      GUID ProductId FK "Links to PRODUCT"
+      string SKU "Unique Variant SKU"
+      string AttributesJSON "Optional, e.g., {'Color': 'Red', 'Size': 'L'}"
+      decimal Price "Specific variant price"
+      int StockQuantity
+      datetime CreatedAt
+      datetime UpdatedAt
     }
-}
+    CATEGORY {
+      GUID Id PK
+      string Name
+      string Slug "URL-friendly name"
+      GUID ParentCategoryId FK "Optional, For sub-categories"
+      datetime CreatedAt
+      datetime UpdatedAt
+    }
+    %% Junction table for Many-to-Many between Product and Category
+    PRODUCT_CATEGORY {
+      GUID ProductId FK "Links to PRODUCT"
+      GUID CategoryId FK "Links to CATEGORY"
+      %% Composite Primary Key (ProductId, CategoryId) typically handled by DB constraint
+    }
+    "ORDER" {
+      GUID Id PK
+      GUID CustomerId FK "Links to CUSTOMER"
+      string OrderNumber "User-friendly identifier"
+      datetime OrderDate
+      string Status "e.g., Pending, Processing, Shipped, Delivered, Cancelled"
+      decimal TotalAmount
+      datetime CreatedAt
+      datetime UpdatedAt
+    }
+    ORDER_ITEM {
+      GUID Id PK
+      GUID OrderId FK "Links to ORDER"
+      GUID ProductVariantId FK "Links to PRODUCT_VARIANT"
+      int Quantity
+      decimal UnitPrice "Price at time of order"
+      decimal TotalPrice
+    }
 ```
 
-> **_Chú thích:_** _Controller sử dụng MediatR để chuyển tiếp requests đến các handlers tương ứng, giúp controllers nhẹ và chỉ tập trung vào việc xử lý HTTP._
+> _**Chú thích:**_ _Đây là ERD giản lược các thực thể và mối quan hệ chính. Xem **Phụ lục B** để có chi tiết đầy đủ về schema._
 
-## 8. 💾 DATABASE & DATA ACCESS
-
-### 8.1. Database Schema Overview
-
-- **Product-related tables**: Products, ProductVariants, Categories, etc.
-- **Order-related tables**: Orders, OrderItems, OrderStatuses, etc.
-- **Customer-related tables**: Customers, Addresses, CustomerGroups, etc.
-- **Inventory tables**: Inventories, StockItems, Warehouses, etc.
-- **Junction tables**: ProductCategories, ProductTags, etc.
-
-> **_Chú thích:_** _Schema được thiết kế để cân bằng giữa chuẩn hóa (để giảm dư thừa) và denormalization (để cải thiện hiệu suất đọc)._
-
-### 8.2. Entity Framework Core Configuration
+#### 4.4.3. Entity Framework Core Configuration Example
 
 ```csharp
 public class ProductConfiguration : IEntityTypeConfiguration<Product>
 {
     public void Configure(EntityTypeBuilder<Product> builder)
     {
-        builder.ToTable("Products");
+        builder.ToTable("Products"); // Đặt tên bảng rõ ràng
         builder.HasKey(p => p.Id);
 
-        builder.Property(p => p.Name)
-            .IsRequired()
-            .HasMaxLength(200);
+        builder.Property(p => p.Name).IsRequired().HasMaxLength(200);
+        builder.Property(p => p.Price).HasColumnType("decimal(18,2)"); // Định nghĩa kiểu dữ liệu DB
 
-        builder.Property(p => p.Description)
-            .HasMaxLength(4000);
-
+        // Quan hệ với Variants
         builder.HasMany(p => p.Variants)
-            .WithOne(v => v.Product)
-            .HasForeignKey(v => v.ProductId)
-            .OnDelete(DeleteBehavior.Cascade);
+               .WithOne(v => v.Product)
+               .HasForeignKey(v => v.ProductId)
+               .OnDelete(DeleteBehavior.Cascade); // Hoặc Restrict tùy logic nghiệp vụ
 
-        builder.HasQueryFilter(p => !p.IsDeleted); // Soft delete
+        // Quan hệ với Category (1-N)
+        builder.HasOne(p => p.Category)
+               .WithMany(c => c.Products)
+               .HasForeignKey(p => p.CategoryId)
+               .OnDelete(DeleteBehavior.SetNull); // Hoặc Restrict
+
+        // Cấu hình Index
+        builder.HasIndex(p => p.Name);
+        builder.HasIndex(p => p.Sku).IsUnique(); // Nếu SKU là duy nhất
+
+        // Cấu hình Soft Delete Filter
+        builder.HasQueryFilter(p => !p.IsDeleted);
     }
 }
 ```
 
-> **_Chú thích:_** _Entity Framework configurations được tách riêng để giữ cho domain models sạch và tập trung vào business logic._
+#### 4.4.4. Migration Strategy
 
-### 8.3. Migration Strategy
+- Code-First approach, Incremental migrations, Schema versioning, Data seeding cho lookup tables.
 
-- **Code-First approach**: Tạo database schema từ C# classes
-- **Incremental migrations**: Thêm migrations cho mỗi thay đổi schema
-- **Schema versioning**: Giữ phiên bản của schema để dễ dàng rollback
-- **Data seeding for lookup tables**: Khởi tạo dữ liệu cho các bảng lookup
+#### 4.4.5. Performance Considerations
 
-> **_Chú thích:_** _Chiến lược migration đảm bảo database schema có thể theo dõi được thay đổi và dễ dàng triển khai trên nhiều môi trường._
+- Indexing phù hợp, Batch operations (BulkExtensions), Tối ưu truy vấn đọc (CQRS), Tránh N+1 problem (Eager/Explicit loading).
 
-### 8.4. Performance Considerations
+### 4.5. Frontend Architecture (`zpx-ui`)
 
-- **Proper indexing**: Tạo indexes cho các cột thường xuyên tìm kiếm
-- **Batch operations with BulkExtensions**: Sử dụng bulk operations cho thao tác hàng loạt
-- **Optimization for read operations (CQRS)**: Tách biệt database đọc và ghi nếu cần
-- **N+1 problem prevention**: Sử dụng Include và eager loading phù hợp
-
-> **_Chú thích:_** _Hiệu suất database là ưu tiên hàng đầu, đặc biệt khi hệ thống mở rộng với lượng dữ liệu lớn._
-
-## 9. 🖥️ FRONTEND ARCHITECTURE
-
-### 9.1. Angular Structure
-
-- **Core Module**: Services, guards và components bắt buộc
-- **Shared Module**: Components, directives và pipes dùng chung
-- **Feature Modules**: Modules theo tính năng, lazy-loaded
-- **Component Architecture**: Smart và presentational components
-
-> **_Chú thích:_** _Cấu trúc Angular tuân theo Angular Style Guide, tổ chức code theo tính năng và khả năng tái sử dụng._
-
-### 9.2. State Management
-
-- **NgRx Store for complex state**: Quản lý state phức tạp toàn cầu
-- **Services with RxJS for simple state**: Quản lý state đơn giản với services
-- **Local component state where appropriate**: State cục bộ cho components
-
-> **_Chú thích:_** _State management strategy phụ thuộc vào độ phức tạp của state, tránh over engineering cho các state đơn giản._
-
-### 9.3. UI Components
-
-- **Angular Material components as base**: Sử dụng Material Design
-- **Custom components extended from Material**: Mở rộng Material components
-- **Responsive design with Flex Layout**: Layout linh hoạt trên mọi thiết bị
-
-> **_Chú thích:_** _UI components được thiết kế để nhất quán và tái sử dụng, với Material Design làm nền tảng._
-
-### 9.4. Routing & Navigation
-
-- **Feature-based routing**: Routes được tổ chức theo tính năng
-- **Route guards for authorization**: Kiểm soát truy cập vào routes
-- **Lazy-loading for performance**: Tải modules khi cần
-
-> **_Chú thích:_** _Routing strategy tận dụng lazy-loading để cải thiện thời gian tải ban đầu và phân tách rõ ràng giữa các tính năng._
-
-### 9.5. Internationalization
-
-- **Multi-language support with NgxTranslate**: Hỗ trợ nhiều ngôn ngữ
-- **Currency and date formatting based on locale**: Định dạng tiền tệ và ngày tháng theo locale
-- **RTL support for applicable languages**: Hỗ trợ ngôn ngữ viết từ phải sang trái
-
-> **_Chú thích:_** _I18n được tích hợp từ đầu để đảm bảo ứng dụng có thể dễ dàng hỗ trợ nhiều ngôn ngữ và khu vực._
-
-## 10. 🛑 ERROR HANDLING & LOGGING
-
-### 10.1. Exception Handling
-
-- **Custom domain exceptions with "Zpx" prefix**: ZpxNotFoundException, ZpxValidationException, etc.
-- **Global exception middleware**: Xử lý lỗi tập trung
-- **Structured error responses**: Format lỗi nhất quán cho client
-
-> **_Chú thích:_** _Exception handling được thiết kế để cung cấp thông tin hữu ích cho developers và người dùng, đồng thời bảo vệ thông tin nhạy cảm._
-
-### 10.2. Logging Strategy
-
-- **Structured logging with Serilog**: Logs có cấu trúc để dễ dàng tìm kiếm và phân tích
-- **Log levels (Debug, Info, Warning, Error, Fatal)**: Phân loại logs theo mức độ nghiêm trọng
-- **Log enrichment with context data**: Thêm context data vào mỗi log entry
-- **Log storage and rotation**: Lưu trữ và xoay vòng logs để quản lý dung lượng
-
-> **_Chú thích:_** _Logging là một phần quan trọng của hệ thống, giúp ghi lại hoạt động và phát hiện sự cố._
-
-### 10.3. Monitoring
-
-- **Health checks**: Kiểm tra sức khỏe hệ thống
-- **Application metrics**: Đo lường hiệu suất ứng dụng
-- **Performance counters**: Theo dõi các chỉ số hiệu suất hệ thống
-- **API usage statistics**: Thống kê sử dụng API
-
-> **_Chú thích:_** _Monitoring giúp phát hiện sớm các vấn đề và cung cấp insights về hiệu suất hệ thống._
-
-## 11. 🔒 SECURITY CONSIDERATIONS
-
-### 11.1. Authentication & Authorization
-
-- **JWT-based authentication**: Xác thực dựa trên JSON Web Tokens
-- **Role-based authorization**: Phân quyền dựa trên vai trò
-- **Policy-based access control**: Kiểm soát truy cập dựa trên policies
-- **Refresh token strategy**: Cơ chế làm mới token
-
-> **_Chú thích:_** _Authentication và authorization được thiết kế để bảo vệ tài nguyên và đảm bảo người dùng chỉ truy cập được vào tài nguyên được phép._
-
-### 11.2. Data Protection
-
-- **HTTPS everywhere**: Mã hóa tất cả giao tiếp
-- **Data encryption for sensitive info**: Mã hóa thông tin nhạy cảm trong database
-- **Input validation and sanitization**: Xác thực và làm sạch input
-- **CSRF protection**: Bảo vệ chống lại tấn công Cross-Site Request Forgery
-
-> **_Chú thích:_** _Data protection là ưu tiên hàng đầu, đặc biệt là thông tin cá nhân và tài chính của khách hàng._
-
-### 11.3. API Security
-
-- **Rate limiting**: Giới hạn số lượng requests
-- **Request validation**: Xác thực tất cả requests
-- **API keys for external systems**: Khóa API cho hệ thống bên ngoài
-- **CORS configuration**: Cấu hình Cross-Origin Resource Sharing
-
-> **_Chú thích:_** _API security đảm bảo API chỉ được sử dụng bởi các clients hợp lệ và không bị lạm dụng._
-
-## 12. 📦 CACHING STRATEGY
-
-### 12.1. Cache Levels
-
-- **Memory cache (first level)**: Cache trong bộ nhớ cho dữ liệu truy cập thường xuyên
-- **Distributed cache with Redis (second level)**: Cache phân tán cho môi trường nhiều instances
-- **Browser caching for static assets**: Cache trên trình duyệt cho tài nguyên tĩnh
-
-> **_Chú thích:_** _Multi-level caching giúp tối ưu hóa hiệu suất ở mỗi layer của hệ thống._
-
-### 12.2. Cache Invalidation
-
-- **Time-based expiration**: Cache hết hạn sau một khoảng thời gian
-- **Event-based invalidation**: Cache được làm mới khi có sự kiện liên quan
-- **Cache dependencies**: Cache phụ thuộc vào các cache khác
-
-> **_Chú thích:_** _Cache invalidation đảm bảo dữ liệu cache luôn được cập nhật và nhất quán với dữ liệu gốc._
-
-### 12.3. Cacheable Resources
-
-- **Product catalog data**: Dữ liệu catalog sản phẩm
-- **User preferences**: Tùy chọn người dùng
-- **Lookup data**: Dữ liệu tham khảo ít thay đổi
-- **Session data**: Dữ liệu phiên
-
-> **_Chú thích:_** _Việc xác định rõ những resource nào nên được cache giúp tối ưu hóa hiệu suất và tránh lãng phí bộ nhớ._
-
-## 13. ✅ TESTING APPROACH
-
-### 13.1. Unit Testing
-
-- **Domain logic tests**: Kiểm tra logic domain
-- **Application handlers tests**: Kiểm tra handlers
-- **Services tests**: Kiểm tra services
-
-> **_Chú thích:_** _Unit tests tập trung vào việc kiểm tra các đơn vị code nhỏ một cách cô lập._
-
-### 13.2. Integration Testing
-
-- **Repository tests**: Kiểm tra truy cập dữ liệu
-- **API endpoint tests**: Kiểm tra endpoints API
-- **Database integration tests**: Kiểm tra tích hợp database
-
-> **_Chú thích:_** _Integration tests kiểm tra tương tác giữa các thành phần của hệ thống._
-
-### 13.3. E2E Testing
-
-- **Critical user flows**: Kiểm tra các luồng nghiệp vụ quan trọng
-- **UI/UX testing**: Kiểm tra giao diện người dùng
-- **Performance testing**: Kiểm tra hiệu suất
-
-> **_Chú thích:_** _E2E tests kiểm tra toàn bộ hệ thống từ góc nhìn của người dùng cuối._
-
-### 13.4. Testing Tools
-
-- **xUnit for unit/integration tests**: Framework testing cho .NET
-- **Moq for mocking**: Library để tạo mock objects
-- **Cypress for E2E tests**: Framework testing cho web applications
-
-> **_Chú thích:_** _Các công cụ testing được chọn dựa trên sự phổ biến, hiệu suất và khả năng tích hợp với CI/CD._
-
-## 14. 🚀 DEPLOYMENT & DEVOPS
-
-### 14.1. CI/CD Pipeline
-
-- **Automated builds with GitHub Actions**: Tự động hóa quá trình build
-- **Automated testing**: Chạy tests tự động
-- **Static code analysis**: Phân tích code tĩnh
-- **Deployment automation**: Tự động hóa triển khai
-
-> **_Chú thích:_** _CI/CD pipeline đảm bảo code được kiểm tra và triển khai một cách nhất quán và đáng tin cậy._
-
-### 14.2. Environments
-
-- **Development**: Môi trường phát triển
-- **Testing**: Môi trường kiểm thử
-- **Staging**: Môi trường pre-production
-- **Production**: Môi trường sản phẩm
-
-> **_Chú thích:_** _Multiple environments đảm bảo code được kiểm tra kỹ lưỡng trước khi đến production._
-
-### 14.3. Deployment Strategy
-
-- **Docker containerization**: Đóng gói ứng dụng trong containers
-- **Azure App Service deployment**: Triển khai lên Azure App Service
-- **Blue-green deployment (zero downtime)**: Triển khai không gián đoạn
-
-> **_Chú thích:_** _Deployment strategy tập trung vào zero downtime và khả năng rollback nhanh chóng._
-
-## 15. 📅 ROADMAP & PHASING
-
-### 15.1. Phase 1: MVP (Month 1-3)
-
-- **Core product catalog**: Quản lý sản phẩm cơ bản
-- **Basic order management**: Quản lý đơn hàng đơn giản
-- **Customer accounts**: Đăng ký và quản lý tài khoản
-- **Admin dashboard**: Dashboard quản trị cơ bản
-- **Payment integration (1-2 providers)**: Tích hợp thanh toán với 1-2 nhà cung cấp
-
-> **_Chú thích:_** _Phase 1 tập trung vào việc xây dựng các tính năng cốt lõi để ra mắt sản phẩm sớm và nhận feedback._
-
-### 15.2. Phase 2: Enhanced Features (Month 4-6)
-
-- **Inventory management**: Quản lý kho hàng
-- **Advanced product search**: Tìm kiếm sản phẩm nâng cao
-- **Promotions & discounts**: Hệ thống khuyến mãi và giảm giá
-- **Customer reviews**: Đánh giá sản phẩm
-- **Expanded payment options**: Mở rộng các tùy chọn thanh toán
-
-> **_Chú thích:_** _Phase 2 mở rộng chức năng dựa trên feedback từ Phase 1 và thêm các tính năng nâng cao._
-
-### 15.3. Phase 3: Advanced Features (Month 7-9)
-
-- **Analytics & reporting**: Phân tích và báo cáo
-- **Marketing tools**: Công cụ marketing
-- **Multi-vendor support (optional)**: Hỗ trợ nhiều nhà cung cấp
-- **Mobile app (optional)**: Ứng dụng di động
-- **API for third-parties**: API cho bên thứ ba
-
-> **_Chú thích:_** _Phase 3 thêm các tính năng nâng cao và mở rộng hệ sinh thái của sản phẩm._
-
-## 16. 📏 CODING STANDARDS & QUALITY
-
-### 16.1. Naming Conventions
-
-- **DTO Request**: `Create[EntityName]Request`, `Update[EntityName]Request`
-- **Specifications**: `[EntityName]Spec.cs`
-- **Custom Exceptions**: `Zpx[ExceptionName]`
-- **Project Prefix**: `ZPX`
-
-> **_Chú thích:_** _Naming conventions đảm bảo code nhất quán và dễ đọc trên toàn bộ dự án._
-
-### 16.2. Code Quality Tools
-
-- **SonarLint/SonarQube**: Phân tích code quality
-- **StyleCop**: Kiểm tra code style
-- **EditorConfig**: Cấu hình editor nhất quán
-- **Code quality gates in CI/CD**: Kiểm tra quality trong CI/CD
-
-> **_Chú thích:_** _Code quality tools giúp duy trì chất lượng code cao và nhất quán trên toàn bộ dự án._
-
-### 16.3. Documentation
-
-- **Code documentation (XML comments)**: Tài liệu code với XML comments
-- **Architecture documentation**: Tài liệu kiến trúc
-- **API documentation**: Tài liệu API
-- **User guides**: Hướng dẫn người dùng
-
-> **_Chú thích:_** _Documentation là một phần quan trọng của dự án, giúp các developers mới dễ dàng tiếp cận và hiểu code._
-
-### 16.4. Development Practices
-
-- **Code reviews**: Đánh giá code trước khi merge
-- **Pull request workflow**: Quy trình pull request
-- **Feature branch strategy**: Branch theo tính năng
-- **Test-driven development (when applicable)**: Phát triển hướng test khi phù hợp
-
-> **_Chú thích:_** _Development practices đảm bảo code chất lượng cao và giảm thiểu bugs._
+- **Cấu trúc**: Core Module, Shared Module, Feature Modules (lazy-loaded).
+- **State Management**: NgRx (cho state phức tạp/toàn cục), Services + RxJS (cho state đơn giản), Local component state.
+- **UI Components**: Base trên Angular Material, Custom components mở rộng, Responsive (Flex Layout).
+- **Routing & Navigation**: Feature-based, Route Guards, Lazy-loading.
+- **Internationalization (I18n)**: NgxTranslate, định dạng currency/date theo locale, hỗ trợ RTL.
 
 ---
 
-## APPENDIX A: RESOURCE REQUIREMENTS
+## 5. 🛑 CÁC VẤN ĐỀ XUYÊN SUỐT (CROSS-CUTTING CONCERNS)
 
-### A.1. Development Team
+### 5.1. Error Handling & Logging
 
-- **1 Tech Lead / Architect**: Chịu trách nhiệm về kiến trúc tổng thể
-- **3-4 Backend Developers**: Phát triển backend
-- **2 Frontend Developers**: Phát triển frontend
-- **1 QA Engineer**: Đảm bảo chất lượng
-- **1 DevOps Engineer (part-time)**: Quản lý deployment và CI/CD
+- **Exception Handling**: Custom domain exceptions (`ZpxNotFoundException`...), Global exception middleware, Structured error responses.
+- **Logging Strategy**: Structured logging (Serilog), Log levels, Log enrichment, Log storage/rotation.
+- **Monitoring**: Health checks, Application metrics, Performance counters, API usage statistics.
 
-> **_Chú thích:_** _Team size được thiết kế để cân bằng giữa tốc độ phát triển và quản lý hiệu quả._
+### 5.2. Security Considerations
 
-### A.2. Infrastructure
+- **Authentication & Authorization**: JWT, Role-based, Policy-based, Refresh token strategy.
+- **Data Protection**: HTTPS, Encryption (at rest/in transit), Input validation/sanitization, CSRF protection.
+- **API Security**: Rate limiting, Request validation, API keys, CORS configuration.
 
-- **Development environments**: Môi trường phát triển cho mỗi developer
-- **Test/QA environment**: Môi trường kiểm thử
-- **Staging environment**: Môi trường pre-production
-- **Production environment**: Môi trường sản phẩm
-- **CI/CD pipeline**: Pipeline tự động hóa
-- **Source control repository**: Repository quản lý source code
+### 5.3. Caching Strategy
 
-> **_Chú thích:_** _Infrastructure được thiết kế để hỗ trợ phát triển liên tục và deployment nhanh chóng._
-
-### A.3. Estimated Timeline
-
-- **Planning & Setup**: 2-3 weeks
-- **MVP Development**: 2-3 months
-- **Testing & Refinement**: 1 month
-- **Enhanced Features**: 3 months
-- **Advanced Features**: 3 months
-
-> **_Chú thích:_** _Timeline là ước tính ban đầu và có thể điều chỉnh dựa trên tiến độ thực tế và feedback._
+- **Cache Levels**: Memory cache (L1), Distributed cache - Redis (L2), Browser caching.
+- **Cache Invalidation**: Time-based, Event-based, Cache dependencies.
+- **Cacheable Resources**: Product catalog, User preferences, Lookup data, Session data.
 
 ---
 
-**Phê duyệt:**
+## 6. ✅ QUY TRÌNH PHÁT TRIỂN & VẬN HÀNH
 
-| Vai trò       | Tên            | Chữ ký | Ngày |
-| ------------- | -------------- | ------ | ---- |
-| Người yêu cầu | phamtiendungcw | ✓      |      |
-| Quản lý dự án | phamtiendungcw | ✓      |      |
-| Kiến trúc sư  | phamtiendungcw | ✓      |      |
+### 6.1. Testing Approach
+
+- **Unit Testing**: Domain logic, Application handlers, Services (xUnit, Moq).
+- **Integration Testing**: Repositories, API endpoints, Database interactions (xUnit, TestContainers/In-Memory DB).
+- **E2E Testing**: Critical user flows, UI/UX (Cypress/Playwright).
+
+### 6.2. Deployment & DevOps
+
+- **CI/CD Pipeline**: Automated builds (GitHub Actions/Azure DevOps), automated testing, static code analysis, deployment automation.
+- **Environments**: Development, Testing/QA, Staging, Production.
+- **Deployment Strategy**: Docker containerization, Azure App Service/Kubernetes, Blue-green/Canary deployment.
+
+### 6.3. Coding Standards & Quality
+
+- **Naming Conventions**: Nhất quán (DTOs, Specs, Exceptions...).
+- **Code Quality Tools**: SonarLint/SonarQube, StyleCop, EditorConfig, Quality gates in CI/CD.
+- **Documentation**: Code comments (XML Doc), Architecture docs, API docs (Swagger), User guides.
+- **Development Practices**: Code reviews, Pull request workflow, Feature branch strategy, TDD (khi phù hợp).
 
 ---
 
-## 🗃️ Thiết kế Database cho ZylPeloXStore (ZPX)
+## 7. 📅 QUẢN LÝ DỰ ÁN
+
+### 7.1. Roadmap & Phasing
+
+- **Phase 1: MVP (Month 1-3)**: Catalog, Order cơ bản, Customer accounts, Admin dashboard, 1-2 Payment providers.
+- **Phase 2: Enhanced Features (Month 4-6)**: Inventory, Advanced search, Promotions, Reviews, Thêm payment options.
+- **Phase 3: Advanced Features (Month 7-9)**: Analytics, Marketing tools, Multi-vendor (opt), Mobile app (opt), 3rd Party API.
+
+### 7.2. Resource Requirements & Timeline
+
+#### 7.2.1. Development Team
+
+- 1 Tech Lead/Architect, 3-4 Backend Devs, 2 Frontend Devs, 1 QA Engineer, 1 DevOps (part-time).
+
+#### 7.2.2. Infrastructure
+
+- Dev, Test/QA, Staging, Production environments, CI/CD pipeline, Source control.
+
+#### 7.2.3. Estimated Timeline
+
+- Planning & Setup: 2-3 weeks
+- MVP Development: 2-3 months
+- Testing & Refinement: 1 month
+- Enhanced Features: 3 months
+- Advanced Features: 3 months
+
+---
+
+## 8. 📎 PHỤ LỤC
+
+### Phụ lục A: Diagram Quy trình Nghiệp vụ
+
+#### A.1. Sequence Diagram: Luồng "Đặt hàng" (Order Placement)
+
+```mermaid
+---
+title: Luồng "Đặt hàng" (Order Placement)
+---
+sequenceDiagram
+    actor User
+    participant FE as "Frontend (zpx-ui)"
+    participant GW as "API Gateway (Optional)"
+    participant API as "API Server (ZPX.Server)"
+    participant APP as "Application (ZPX.Application)"
+    participant DM as "Domain (ZPX.Domain)"
+    participant DB as "Persistence (ZPX.Persistence)"
+    participant PAY as "Payment Service (Infrastructure)"
+    participant EMAIL as "Email Service (Infrastructure)"
+
+    User->>+FE: 1. Chọn sản phẩm, điền thông tin, nhấn "Đặt hàng"
+    FE->>+GW: 2. POST /api/v1/orders (Auth Token, Order Data)
+    GW->>+API: 3. Forward POST /api/v1/orders
+    API->>+APP: 4. Execute CreateOrderCommand (CQRS)
+    APP->>+DM: 5. Validate Order Data (Business Rules)
+    DM-->>-APP: 6. Validation Result (Success/Fail)
+    alt Order is Valid
+        APP->>DM: 7. Create Order Aggregate (Entities: Order, OrderItems)
+        APP->>+DB: 8. SaveChangesAsync() (Unit of Work Pattern)
+        DB-->>-APP: 9. Order Saved (ID generated)
+        APP->>+PAY: 10. ProcessPayment(OrderId, Amount, PaymentDetails)
+        PAY-->>-APP: 11. PaymentResult (Success/Fail)
+        alt Payment Successful
+            APP->>+DB: 12. Update Order Status ('Processing' or 'Paid')
+            DB-->>-APP: 13. Status Updated
+            APP->> DM: 14. Raise OrderPlaced Domain Event
+            APP->>+EMAIL: 15. SendOrderConfirmationEmail(OrderId, CustomerEmail)
+            EMAIL-->>-APP: 16. Email Queued/Sent
+            APP-->>API: 17. Order Creation Success (Order Details)
+        else Payment Failed
+            APP->>+DB: 12a. Update Order Status ('PaymentFailed')
+            DB-->>-APP: 13a. Status Updated
+            APP-->>API: 17a. Order Creation Failed (Payment Error)
+        end
+    else Order is Invalid
+         APP-->>API: 17b. Order Creation Failed (Validation Errors)
+    end
+    API-->>-GW: 18. API Response
+    GW-->>-FE: 19. Forward API Response
+    FE->>-User: 20. Hiển thị trạng thái đặt hàng (Success/Error Message)
+```
+
+#### A.2. Sequence Diagram: Luồng "Quản lý tồn kho tự động" (Auto Inventory Adjustment)
+
+```mermaid
+---
+title: Luồng "Quản lý tồn kho tự động" (Auto Inventory Adjustment via Domain Event)
+---
+sequenceDiagram
+    participant APP as "Application Layer (Order Service Context)"
+    participant DM as "Domain Layer"
+    participant DB as "Persistence (ZPX.Persistence)"
+    participant MQ as "Event Bus (e.g., RabbitMQ via ZPX.Infrastructure)"
+    participant InventoryHandler as "InventoryEventHandler (App Layer - Inventory Context)"
+    participant Notify as "NotificationService (Infrastructure)"
+    participant Admin as "Admin User/System"
+
+    Note over APP, DB: Order has been successfully placed and saved.
+    APP->>+DM: 1. Raise OrderPlaced Domain Event
+    DM-->>-APP: (Event raised within Domain)
+
+    Note over APP, MQ: Application Layer (or Domain Event Dispatcher) handles publishing events.
+    APP->>+MQ: 2. Publish(OrderPlacedEvent)
+
+    Note right of MQ: Event Bus delivers event to interested subscribers.
+    MQ->>+InventoryHandler: 3. Receive(OrderPlacedEvent)
+
+    InventoryHandler->>+DB: 4. Get ProductVariant data for OrderItems
+    DB-->>-InventoryHandler: 5. ProductVariant details (incl. current stock)
+
+    loop For Each OrderItem in Event
+        InventoryHandler->>InventoryHandler: 6. Calculate new stock level
+        InventoryHandler->>+DB: 7. Update ProductVariant Stock (e.g., Stock = Stock - Quantity)
+        DB-->>-InventoryHandler: 8. Stock updated
+        alt Stock Level is Low (below threshold)
+            InventoryHandler->>+MQ: 9. Publish(LowStockDetectedEvent)
+            MQ->>+Notify: 10. Receive(LowStockDetectedEvent)
+            Notify->>Admin: 11. Send Low Stock Notification (Email, SMS, etc.)
+        end
+    end
+    InventoryHandler-->>-MQ: (Processing Complete)
+```
+
+### Phụ lục B: Chi tiết Schema Database
 
 > **Ngày hiện tại:** 2025-04-15 11:00:01
 > **Người dùng:** phamtiendungcw
 
-## 📋 Tổng quan các bảng
-
-Dưới đây là các bảng dữ liệu được thiết kế cho ZPX eCommerce platform:
+#### 📋 Tổng quan các nhóm bảng
 
 1. **Identity Tables** - Quản lý người dùng và xác thực
 2. **Core eCommerce Tables** - Sản phẩm, danh mục, đơn hàng
@@ -941,18 +778,19 @@ Dưới đây là các bảng dữ liệu được thiết kế cho ZPX eCommerc
 4. **Inventory & Stock Tables** - Quản lý hàng tồn kho
 5. **Review & Rating Tables** - Đánh giá sản phẩm
 6. **Marketing Tables** - Khuyến mãi, mã giảm giá
+7. **Logging & Audit Tables** - Ghi log hệ thống
 
-## 🔑 Identity Tables
+#### 🔑 Identity Tables
 
-### 1. AspNetUsers (Bảng Identity mặc định)
+##### 1. AspNetUsers (Bảng Identity mặc định)
 
 | Column Name          | Data Type      | Constraints | Description             |
 | -------------------- | -------------- | ----------- | ----------------------- |
 | Id                   | nvarchar(450)  | PK          | Định danh người dùng    |
 | UserName             | nvarchar(256)  |             | Tên đăng nhập           |
-| NormalizedUserName   | nvarchar(256)  |             | Tên đăng nhập chuẩn hóa |
+| NormalizedUserName   | nvarchar(256)  | INDEX       | Tên đăng nhập chuẩn hóa |
 | Email                | nvarchar(256)  |             | Email                   |
-| NormalizedEmail      | nvarchar(256)  |             | Email chuẩn hóa         |
+| NormalizedEmail      | nvarchar(256)  | INDEX       | Email chuẩn hóa         |
 | EmailConfirmed       | bit            |             | Email đã xác nhận       |
 | PasswordHash         | nvarchar(max)  |             | Mật khẩu đã hash        |
 | SecurityStamp        | nvarchar(max)  |             | Dùng cho bảo mật        |
@@ -967,158 +805,196 @@ Dưới đây là các bảng dữ liệu được thiết kế cho ZPX eCommerc
 | LastName             | nvarchar(100)  |             | Họ                      |
 | ProfilePictureUrl    | nvarchar(500)  |             | URL ảnh đại diện        |
 
-### 2. AspNetRoles
+##### 2. AspNetRoles
 
 | Column Name      | Data Type     | Constraints | Description           |
 | ---------------- | ------------- | ----------- | --------------------- |
 | Id               | nvarchar(450) | PK          | Định danh vai trò     |
 | Name             | nvarchar(256) |             | Tên vai trò           |
-| NormalizedName   | nvarchar(256) |             | Tên vai trò chuẩn hóa |
+| NormalizedName   | nvarchar(256) | INDEX       | Tên vai trò chuẩn hóa |
 | ConcurrencyStamp | nvarchar(max) |             | Kiểm soát đồng thời   |
 
-### 3. AspNetUserRoles
+##### 3. AspNetUserRoles
 
 | Column Name | Data Type     | Constraints | Description   |
 | ----------- | ------------- | ----------- | ------------- |
 | UserId      | nvarchar(450) | PK, FK      | ID người dùng |
 | RoleId      | nvarchar(450) | PK, FK      | ID vai trò    |
 
-### 4. AspNetUserClaims, AspNetRoleClaims, AspNetUserLogins, AspNetUserTokens
+##### 4. AspNetUserClaims, AspNetRoleClaims, AspNetUserLogins, AspNetUserTokens
 
 \*(Các bảng Identity khác theo chuẩn)\_
 
-## 🛒 Core eCommerce Tables
+#### 🛒 Core eCommerce Tables
 
-### 5. Products
+##### 5. Products
 
-| Column Name           | Data Type        | Constraints          | Description                |
-| --------------------- | ---------------- | -------------------- | -------------------------- |
-| Id                    | uniqueidentifier | PK                   | Định danh sản phẩm         |
-| Name                  | nvarchar(200)    | NOT NULL             | Tên sản phẩm               |
-| Description           | nvarchar(max)    |                      | Mô tả sản phẩm             |
-| ShortDescription      | nvarchar(500)    |                      | Mô tả ngắn                 |
-| Price                 | decimal(18,2)    | NOT NULL             | Giá                        |
-| OldPrice              | decimal(18,2)    |                      | Giá cũ (khi giảm giá)      |
-| SpecialPrice          | decimal(18,2)    |                      | Giá đặc biệt               |
-| SpecialPriceStartDate | datetime2        |                      | Ngày bắt đầu giá đặc biệt  |
-| SpecialPriceEndDate   | datetime2        |                      | Ngày kết thúc giá đặc biệt |
-| StockQuantity         | int              | NOT NULL, DEFAULT(0) | Số lượng tồn kho           |
-| Weight                | decimal(18,4)    |                      | Trọng lượng                |
-| Length                | decimal(18,4)    |                      | Chiều dài                  |
-| Width                 | decimal(18,4)    |                      | Chiều rộng                 |
-| Height                | decimal(18,4)    |                      | Chiều cao                  |
-| Sku                   | nvarchar(100)    |                      | Stock Keeping Unit         |
-| Gtin                  | nvarchar(100)    |                      | Global Trade Item Number   |
-| CategoryId            | uniqueidentifier | FK                   | ID danh mục                |
-| BrandId               | uniqueidentifier | FK                   | ID thương hiệu             |
-| IsActive              | bit              | NOT NULL, DEFAULT(1) | Trạng thái kích hoạt       |
-| IsFeatured            | bit              | NOT NULL, DEFAULT(0) | Sản phẩm nổi bật           |
-| CreatedAt             | datetime2        | NOT NULL             | Ngày tạo                   |
-| CreatedBy             | nvarchar(450)    |                      | Người tạo                  |
-| ModifiedAt            | datetime2        |                      | Ngày sửa đổi               |
-| ModifiedBy            | nvarchar(450)    |                      | Người sửa đổi              |
+| Column Name           | Data Type        | Constraints                     | Description                   |
+| --------------------- | ---------------- | ------------------------------- | ----------------------------- |
+| Id                    | uniqueidentifier | PK                              | Định danh sản phẩm            |
+| Name                  | nvarchar(200)    | NOT NULL, INDEX                 | Tên sản phẩm                  |
+| Description           | nvarchar(max)    |                                 | Mô tả sản phẩm                |
+| ShortDescription      | nvarchar(500)    |                                 | Mô tả ngắn                    |
+| Price                 | decimal(18,2)    | NOT NULL                        | Giá gốc                       |
+| OldPrice              | decimal(18,2)    |                                 | Giá cũ (khi giảm giá)         |
+| SpecialPrice          | decimal(18,2)    |                                 | Giá đặc biệt                  |
+| SpecialPriceStartDate | datetime2        |                                 | Ngày bắt đầu giá đặc biệt     |
+| SpecialPriceEndDate   | datetime2        |                                 | Ngày kết thúc giá đặc biệt    |
+| Sku                   | nvarchar(100)    | INDEX, UNIQUE                   | Stock Keeping Unit            |
+| Gtin                  | nvarchar(100)    | INDEX                           | Global Trade Item Number      |
+| CategoryId            | uniqueidentifier | FK, INDEX                       | ID danh mục                   |
+| BrandId               | uniqueidentifier | FK, INDEX                       | ID thương hiệu                |
+| IsActive              | bit              | NOT NULL, DEFAULT(1)            | Trạng thái kích hoạt          |
+| IsFeatured            | bit              | NOT NULL, DEFAULT(0)            | Sản phẩm nổi bật              |
+| IsDeleted             | bit              | NOT NULL, DEFAULT(0)            | Trạng thái xóa mềm            |
+| CreatedAt             | datetime2        | NOT NULL, DEFAULT(GETUTCDATE()) | Ngày tạo                      |
+| CreatedBy             | nvarchar(450)    | FK (AspNetUsers.Id)             | Người tạo                     |
+| ModifiedAt            | datetime2        |                                 | Ngày sửa đổi                  |
+| ModifiedBy            | nvarchar(450)    | FK (AspNetUsers.Id)             | Người sửa đổi                 |
+| DeletedAt             | datetime2        |                                 | Ngày xóa                      |
+| DeletedBy             | nvarchar(450)    | FK (AspNetUsers.Id)             | Người xóa                     |
+| StockQuantity         | int              | NOT NULL, DEFAULT(0)            | **(Moved to ProductVariant)** |
+| Weight                | decimal(18,4)    |                                 | **(Moved to ProductVariant)** |
+| Length                | decimal(18,4)    |                                 | **(Moved to ProductVariant)** |
+| Width                 | decimal(18,4)    |                                 | **(Moved to ProductVariant)** |
+| Height                | decimal(18,4)    |                                 | **(Moved to ProductVariant)** |
 
-### 6. ProductImages
+##### 6. ProductVariants (NEW/MODIFIED Table for Variants)
 
-| Column Name  | Data Type        | Constraints          | Description      |
-| ------------ | ---------------- | -------------------- | ---------------- |
-| Id           | uniqueidentifier | PK                   | Định danh ảnh    |
-| ProductId    | uniqueidentifier | FK, NOT NULL         | ID sản phẩm      |
-| ImageUrl     | nvarchar(500)    | NOT NULL             | URL ảnh          |
-| AltText      | nvarchar(200)    |                      | Văn bản thay thế |
-| DisplayOrder | int              | NOT NULL, DEFAULT(0) | Thứ tự hiển thị  |
-| IsMain       | bit              | NOT NULL, DEFAULT(0) | Ảnh chính        |
-| CreatedAt    | datetime2        | NOT NULL             | Ngày tạo         |
-| CreatedBy    | nvarchar(450)    |                      | Người tạo        |
+| Column Name      | Data Type        | Constraints                       | Description           |
+| ---------------- | ---------------- | --------------------------------- | --------------------- |
+| Id               | uniqueidentifier | PK                                | Định danh biến thể    |
+| ProductId        | uniqueidentifier | FK (Products.Id), NOT NULL, INDEX | ID sản phẩm cha       |
+| Name             | nvarchar(200)    |                                   | Tên biến thể (nếu có) |
+| Sku              | nvarchar(100)    | INDEX, UNIQUE                     | SKU của biến thể      |
+| Price            | decimal(18,2)    | NOT NULL                          | Giá của biến thể      |
+| OldPrice         | decimal(18,2)    |                                   | Giá cũ của biến thể   |
+| StockQuantity    | int              | NOT NULL, DEFAULT(0)              | Số lượng tồn kho      |
+| ReservedQuantity | int              | NOT NULL, DEFAULT(0)              | Số lượng đặt trước    |
+| Weight           | decimal(18,4)    |                                   | Trọng lượng           |
+| Length           | decimal(18,4)    |                                   | Chiều dài             |
+| Width            | decimal(18,4)    |                                   | Chiều rộng            |
+| Height           | decimal(18,4)    |                                   | Chiều cao             |
+| AttributesJSON   | nvarchar(max)    |                                   | Thuộc tính (JSON)     |
+| ImageUrl         | nvarchar(500)    |                                   | Ảnh đại diện biến thể |
+| IsActive         | bit              | NOT NULL, DEFAULT(1)              | Trạng thái kích hoạt  |
+| CreatedAt        | datetime2        | NOT NULL, DEFAULT(GETUTCDATE())   | Ngày tạo              |
+| CreatedBy        | nvarchar(450)    | FK (AspNetUsers.Id)               | Người tạo             |
+| ModifiedAt       | datetime2        |                                   | Ngày sửa đổi          |
+| ModifiedBy       | nvarchar(450)    | FK (AspNetUsers.Id)               | Người sửa đổi         |
 
-### 7. ProductAttributes
+##### 7. ProductImages
 
-| Column Name    | Data Type        | Constraints          | Description          |
-| -------------- | ---------------- | -------------------- | -------------------- |
-| Id             | uniqueidentifier | PK                   | Định danh thuộc tính |
-| ProductId      | uniqueidentifier | FK, NOT NULL         | ID sản phẩm          |
-| AttributeName  | nvarchar(100)    | NOT NULL             | Tên thuộc tính       |
-| AttributeValue | nvarchar(500)    | NOT NULL             | Giá trị thuộc tính   |
-| DisplayOrder   | int              | NOT NULL, DEFAULT(0) | Thứ tự hiển thị      |
-| CreatedAt      | datetime2        | NOT NULL             | Ngày tạo             |
-| CreatedBy      | nvarchar(450)    |                      | Người tạo            |
+| Column Name      | Data Type        | Constraints                       | Description                             |
+| ---------------- | ---------------- | --------------------------------- | --------------------------------------- |
+| Id               | uniqueidentifier | PK                                | Định danh ảnh                           |
+| ProductId        | uniqueidentifier | FK (Products.Id), NOT NULL, INDEX | ID sản phẩm                             |
+| ProductVariantId | uniqueidentifier | FK (ProductVariants.Id), INDEX    | ID biến thể (nếu ảnh riêng cho variant) |
+| ImageUrl         | nvarchar(500)    | NOT NULL                          | URL ảnh                                 |
+| AltText          | nvarchar(200)    |                                   | Văn bản thay thế                        |
+| DisplayOrder     | int              | NOT NULL, DEFAULT(0)              | Thứ tự hiển thị                         |
+| CreatedAt        | datetime2        | NOT NULL, DEFAULT(GETUTCDATE())   | Ngày tạo                                |
+| CreatedBy        | nvarchar(450)    | FK (AspNetUsers.Id)               | Người tạo                               |
 
-### 8. Categories
+##### 8. ProductAttributes (Consider using JSON in Product or Variant)
 
-| Column Name     | Data Type        | Constraints          | Description          |
-| --------------- | ---------------- | -------------------- | -------------------- |
-| Id              | uniqueidentifier | PK                   | Định danh danh mục   |
-| Name            | nvarchar(200)    | NOT NULL             | Tên danh mục         |
-| Description     | nvarchar(500)    |                      | Mô tả                |
-| ParentId        | uniqueidentifier | FK                   | ID danh mục cha      |
-| DisplayOrder    | int              | NOT NULL, DEFAULT(0) | Thứ tự hiển thị      |
-| IsActive        | bit              | NOT NULL, DEFAULT(1) | Trạng thái kích hoạt |
-| ImageUrl        | nvarchar(500)    |                      | URL hình ảnh         |
-| Slug            | nvarchar(200)    | NOT NULL             | URL thân thiện       |
-| MetaTitle       | nvarchar(200)    |                      | Tiêu đề SEO          |
-| MetaKeywords    | nvarchar(500)    |                      | Từ khóa SEO          |
-| MetaDescription | nvarchar(500)    |                      | Mô tả SEO            |
-| CreatedAt       | datetime2        | NOT NULL             | Ngày tạo             |
-| CreatedBy       | nvarchar(450)    |                      | Người tạo            |
-| ModifiedAt      | datetime2        |                      | Ngày sửa đổi         |
-| ModifiedBy      | nvarchar(450)    |                      | Người sửa đổi        |
+| Column Name    | Data Type        | Constraints                       | Description          |
+| -------------- | ---------------- | --------------------------------- | -------------------- |
+| Id             | uniqueidentifier | PK                                | Định danh thuộc tính |
+| ProductId      | uniqueidentifier | FK (Products.Id), NOT NULL, INDEX | ID sản phẩm          |
+| AttributeName  | nvarchar(100)    | NOT NULL                          | Tên thuộc tính       |
+| AttributeValue | nvarchar(500)    | NOT NULL                          | Giá trị thuộc tính   |
+| DisplayOrder   | int              | NOT NULL, DEFAULT(0)              | Thứ tự hiển thị      |
+| CreatedAt      | datetime2        | NOT NULL, DEFAULT(GETUTCDATE())   | Ngày tạo             |
+| CreatedBy      | nvarchar(450)    | FK (AspNetUsers.Id)               | Người tạo            |
 
-### 9. Brands
+##### 9. Categories
 
-| Column Name  | Data Type        | Constraints          | Description           |
-| ------------ | ---------------- | -------------------- | --------------------- |
-| Id           | uniqueidentifier | PK                   | Định danh thương hiệu |
-| Name         | nvarchar(200)    | NOT NULL             | Tên thương hiệu       |
-| Description  | nvarchar(500)    |                      | Mô tả                 |
-| LogoUrl      | nvarchar(500)    |                      | URL logo              |
-| IsActive     | bit              | NOT NULL, DEFAULT(1) | Trạng thái kích hoạt  |
-| DisplayOrder | int              | NOT NULL, DEFAULT(0) | Thứ tự hiển thị       |
-| Slug         | nvarchar(200)    | NOT NULL             | URL thân thiện        |
-| CreatedAt    | datetime2        | NOT NULL             | Ngày tạo              |
-| CreatedBy    | nvarchar(450)    |                      | Người tạo             |
-| ModifiedAt   | datetime2        |                      | Ngày sửa đổi          |
-| ModifiedBy   | nvarchar(450)    |                      | Người sửa đổi         |
+| Column Name     | Data Type        | Constraints                     | Description          |
+| --------------- | ---------------- | ------------------------------- | -------------------- |
+| Id              | uniqueidentifier | PK                              | Định danh danh mục   |
+| Name            | nvarchar(200)    | NOT NULL, INDEX                 | Tên danh mục         |
+| Description     | nvarchar(500)    |                                 | Mô tả                |
+| ParentId        | uniqueidentifier | FK (Categories.Id), INDEX       | ID danh mục cha      |
+| DisplayOrder    | int              | NOT NULL, DEFAULT(0)            | Thứ tự hiển thị      |
+| IsActive        | bit              | NOT NULL, DEFAULT(1)            | Trạng thái kích hoạt |
+| ImageUrl        | nvarchar(500)    |                                 | URL hình ảnh         |
+| Slug            | nvarchar(200)    | NOT NULL, INDEX, UNIQUE         | URL thân thiện       |
+| MetaTitle       | nvarchar(200)    |                                 | Tiêu đề SEO          |
+| MetaKeywords    | nvarchar(500)    |                                 | Từ khóa SEO          |
+| MetaDescription | nvarchar(500)    |                                 | Mô tả SEO            |
+| IsDeleted       | bit              | NOT NULL, DEFAULT(0)            | Trạng thái xóa mềm   |
+| CreatedAt       | datetime2        | NOT NULL, DEFAULT(GETUTCDATE()) | Ngày tạo             |
+| CreatedBy       | nvarchar(450)    | FK (AspNetUsers.Id)             | Người tạo            |
+| ModifiedAt      | datetime2        |                                 | Ngày sửa đổi         |
+| ModifiedBy      | nvarchar(450)    | FK (AspNetUsers.Id)             | Người sửa đổi        |
+| DeletedAt       | datetime2        |                                 | Ngày xóa             |
+| DeletedBy       | nvarchar(450)    | FK (AspNetUsers.Id)             | Người xóa            |
 
-### 10. Orders
+##### 10. Brands
 
-| Column Name       | Data Type        | Constraints          | Description            |
-| ----------------- | ---------------- | -------------------- | ---------------------- |
-| Id                | uniqueidentifier | PK                   | Định danh đơn hàng     |
-| OrderNumber       | nvarchar(50)     | NOT NULL             | Số đơn hàng            |
-| CustomerId        | uniqueidentifier | FK, NOT NULL         | ID khách hàng          |
-| OrderDate         | datetime2        | NOT NULL             | Ngày đặt hàng          |
-| OrderStatusId     | int              | NOT NULL             | Trạng thái đơn hàng    |
-| ShippingAddressId | uniqueidentifier | FK, NOT NULL         | Địa chỉ giao hàng      |
-| BillingAddressId  | uniqueidentifier | FK                   | Địa chỉ thanh toán     |
-| PaymentMethodId   | int              |                      | Phương thức thanh toán |
-| ShippingMethodId  | int              |                      | Phương thức vận chuyển |
-| SubTotal          | decimal(18,2)    | NOT NULL             | Tổng tiền hàng         |
-| ShippingCost      | decimal(18,2)    | NOT NULL, DEFAULT(0) | Phí vận chuyển         |
-| TaxAmount         | decimal(18,2)    | NOT NULL, DEFAULT(0) | Thuế                   |
-| DiscountAmount    | decimal(18,2)    | NOT NULL, DEFAULT(0) | Giảm giá               |
-| TotalAmount       | decimal(18,2)    | NOT NULL             | Tổng cộng              |
-| Notes             | nvarchar(max)    |                      | Ghi chú                |
-| CouponCode        | nvarchar(50)     |                      | Mã giảm giá            |
-| CreatedAt         | datetime2        | NOT NULL             | Ngày tạo               |
-| CreatedBy         | nvarchar(450)    |                      | Người tạo              |
-| ModifiedAt        | datetime2        |                      | Ngày sửa đổi           |
-| ModifiedBy        | nvarchar(450)    |                      | Người sửa đổi          |
+| Column Name  | Data Type        | Constraints                     | Description           |
+| ------------ | ---------------- | ------------------------------- | --------------------- |
+| Id           | uniqueidentifier | PK                              | Định danh thương hiệu |
+| Name         | nvarchar(200)    | NOT NULL, INDEX                 | Tên thương hiệu       |
+| Description  | nvarchar(500)    |                                 | Mô tả                 |
+| LogoUrl      | nvarchar(500)    |                                 | URL logo              |
+| IsActive     | bit              | NOT NULL, DEFAULT(1)            | Trạng thái kích hoạt  |
+| DisplayOrder | int              | NOT NULL, DEFAULT(0)            | Thứ tự hiển thị       |
+| Slug         | nvarchar(200)    | NOT NULL, INDEX, UNIQUE         | URL thân thiện        |
+| IsDeleted    | bit              | NOT NULL, DEFAULT(0)            | Trạng thái xóa mềm    |
+| CreatedAt    | datetime2        | NOT NULL, DEFAULT(GETUTCDATE()) | Ngày tạo              |
+| CreatedBy    | nvarchar(450)    | FK (AspNetUsers.Id)             | Người tạo             |
+| ModifiedAt   | datetime2        |                                 | Ngày sửa đổi          |
+| ModifiedBy   | nvarchar(450)    | FK (AspNetUsers.Id)             | Người sửa đổi         |
+| DeletedAt    | datetime2        |                                 | Ngày xóa              |
+| DeletedBy    | nvarchar(450)    | FK (AspNetUsers.Id)             | Người xóa             |
 
-### 11. OrderItems
+##### 11. Orders
 
-| Column Name | Data Type        | Constraints  | Description            |
-| ----------- | ---------------- | ------------ | ---------------------- |
-| Id          | uniqueidentifier | PK           | Định danh mục đơn hàng |
-| OrderId     | uniqueidentifier | FK, NOT NULL | ID đơn hàng            |
-| ProductId   | uniqueidentifier | FK, NOT NULL | ID sản phẩm            |
-| Quantity    | int              | NOT NULL     | Số lượng               |
-| UnitPrice   | decimal(18,2)    | NOT NULL     | Đơn giá                |
-| TotalPrice  | decimal(18,2)    | NOT NULL     | Thành tiền             |
-| ProductName | nvarchar(200)    | NOT NULL     | Tên sản phẩm           |
-| SKU         | nvarchar(100)    |              | Mã SKU                 |
-| CreatedAt   | datetime2        | NOT NULL     | Ngày tạo               |
+| Column Name       | Data Type        | Constraints                            | Description            |
+| ----------------- | ---------------- | -------------------------------------- | ---------------------- |
+| Id                | uniqueidentifier | PK                                     | Định danh đơn hàng     |
+| OrderNumber       | nvarchar(50)     | NOT NULL, INDEX, UNIQUE                | Số đơn hàng            |
+| CustomerId        | uniqueidentifier | FK (Customers.Id), NOT NULL, INDEX     | ID khách hàng          |
+| OrderDate         | datetime2        | NOT NULL, DEFAULT(GETUTCDATE())        | Ngày đặt hàng          |
+| OrderStatusId     | int              | FK (OrderStatuses.Id), NOT NULL, INDEX | Trạng thái             |
+| ShippingAddressId | uniqueidentifier | FK (Addresses.Id), NOT NULL            | Địa chỉ giao hàng      |
+| BillingAddressId  | uniqueidentifier | FK (Addresses.Id)                      | Địa chỉ thanh toán     |
+| PaymentMethodId   | int              | FK (PaymentMethods.Id)                 | Phương thức thanh toán |
+| ShippingMethodId  | int              | FK (ShippingMethods.Id)                | Phương thức vận chuyển |
+| SubTotal          | decimal(18,2)    | NOT NULL                               | Tổng tiền hàng         |
+| ShippingCost      | decimal(18,2)    | NOT NULL, DEFAULT(0)                   | Phí vận chuyển         |
+| TaxAmount         | decimal(18,2)    | NOT NULL, DEFAULT(0)                   | Thuế                   |
+| DiscountAmount    | decimal(18,2)    | NOT NULL, DEFAULT(0)                   | Giảm giá               |
+| TotalAmount       | decimal(18,2)    | NOT NULL                               | Tổng cộng              |
+| Notes             | nvarchar(max)    |                                        | Ghi chú của KH         |
+| AdminNotes        | nvarchar(max)    |                                        | Ghi chú của Admin      |
+| CouponCode        | nvarchar(50)     | INDEX                                  | Mã giảm giá đã dùng    |
+| IsDeleted         | bit              | NOT NULL, DEFAULT(0)                   | Trạng thái xóa mềm     |
+| CreatedAt         | datetime2        | NOT NULL, DEFAULT(GETUTCDATE())        | Ngày tạo               |
+| CreatedBy         | nvarchar(450)    | FK (AspNetUsers.Id)                    | Người tạo (Nếu KH tạo) |
+| ModifiedAt        | datetime2        |                                        | Ngày sửa đổi           |
+| ModifiedBy        | nvarchar(450)    | FK (AspNetUsers.Id)                    | Người sửa đổi          |
+| DeletedAt         | datetime2        |                                        | Ngày xóa               |
+| DeletedBy         | nvarchar(450)    | FK (AspNetUsers.Id)                    | Người xóa              |
 
-### 12. OrderStatuses
+##### 12. OrderItems
+
+| Column Name        | Data Type        | Constraints                              | Description               |
+| ------------------ | ---------------- | ---------------------------------------- | ------------------------- |
+| Id                 | uniqueidentifier | PK                                       | Định danh mục đơn hàng    |
+| OrderId            | uniqueidentifier | FK (Orders.Id), NOT NULL, INDEX          | ID đơn hàng               |
+| ProductVariantId   | uniqueidentifier | FK (ProductVariants.Id), NOT NULL, INDEX | ID biến thể sản phẩm      |
+| Quantity           | int              | NOT NULL                                 | Số lượng                  |
+| UnitPrice          | decimal(18,2)    | NOT NULL                                 | Đơn giá tại thời điểm mua |
+| TotalPrice         | decimal(18,2)    | NOT NULL                                 | Thành tiền                |
+| ProductName        | nvarchar(200)    | NOT NULL                                 | Tên SP (snapshot)         |
+| ProductVariantName | nvarchar(200)    |                                          | Tên biến thể (snapshot)   |
+| Sku                | nvarchar(100)    |                                          | Mã SKU (snapshot)         |
+| CreatedAt          | datetime2        | NOT NULL, DEFAULT(GETUTCDATE())          | Ngày tạo                  |
+
+##### 13. OrderStatuses (Lookup Table)
 
 | Column Name  | Data Type     | Constraints | Description          |
 | ------------ | ------------- | ----------- | -------------------- |
@@ -1126,8 +1002,9 @@ Dưới đây là các bảng dữ liệu được thiết kế cho ZPX eCommerc
 | Name         | nvarchar(50)  | NOT NULL    | Tên trạng thái       |
 | Description  | nvarchar(200) |             | Mô tả                |
 | DisplayOrder | int           | NOT NULL    | Thứ tự hiển thị      |
+| IsDefault    | bit           | DEFAULT(0)  | Trạng thái mặc định  |
 
-### 13. PaymentMethods
+##### 14. PaymentMethods (Lookup Table)
 
 | Column Name        | Data Type     | Constraints          | Description             |
 | ------------------ | ------------- | -------------------- | ----------------------- |
@@ -1138,7 +1015,7 @@ Dưới đây là các bảng dữ liệu được thiết kế cho ZPX eCommerc
 | DisplayOrder       | int           | NOT NULL             | Thứ tự hiển thị         |
 | AdditionalSettings | nvarchar(max) |                      | Cấu hình bổ sung (JSON) |
 
-### 14. ShippingMethods
+##### 15. ShippingMethods (Lookup Table)
 
 | Column Name     | Data Type     | Constraints          | Description              |
 | --------------- | ------------- | -------------------- | ------------------------ |
@@ -1151,61 +1028,64 @@ Dưới đây là các bảng dữ liệu được thiết kế cho ZPX eCommerc
 | IsActive        | bit           | NOT NULL, DEFAULT(1) | Trạng thái kích hoạt     |
 | DisplayOrder    | int           | NOT NULL             | Thứ tự hiển thị          |
 
-## 👥 Customer Management Tables
+#### 👥 Customer Management Tables
 
-### 15. Customers
+##### 16. Customers
 
-| Column Name              | Data Type        | Constraints          | Description                    |
-| ------------------------ | ---------------- | -------------------- | ------------------------------ |
-| Id                       | uniqueidentifier | PK                   | Định danh khách hàng           |
-| UserId                   | nvarchar(450)    | FK                   | ID người dùng (nếu đã đăng ký) |
-| FirstName                | nvarchar(100)    | NOT NULL             | Tên                            |
-| LastName                 | nvarchar(100)    | NOT NULL             | Họ                             |
-| Email                    | nvarchar(256)    | NOT NULL             | Email                          |
-| PhoneNumber              | nvarchar(20)     |                      | Số điện thoại                  |
-| DateOfBirth              | date             |                      | Ngày sinh                      |
-| Gender                   | nvarchar(10)     |                      | Giới tính                      |
-| CustomerTypeId           | int              |                      | Loại khách hàng                |
-| IsSubscribedToNewsletter | bit              | NOT NULL, DEFAULT(0) | Đăng ký newsletter             |
-| CreatedAt                | datetime2        | NOT NULL             | Ngày tạo                       |
-| CreatedBy                | nvarchar(450)    |                      | Người tạo                      |
-| ModifiedAt               | datetime2        |                      | Ngày sửa đổi                   |
-| ModifiedBy               | nvarchar(450)    |                      | Người sửa đổi                  |
+| Column Name              | Data Type        | Constraints                        | Description                    |
+| ------------------------ | ---------------- | ---------------------------------- | ------------------------------ |
+| Id                       | uniqueidentifier | PK                                 | Định danh khách hàng           |
+| UserId                   | nvarchar(450)    | FK (AspNetUsers.Id), INDEX, UNIQUE | ID người dùng liên kết         |
+| FirstName                | nvarchar(100)    | NOT NULL                           | Tên                            |
+| LastName                 | nvarchar(100)    | NOT NULL                           | Họ                             |
+| Email                    | nvarchar(256)    | NOT NULL, INDEX, UNIQUE            | Email (có thể khác AspNetUser) |
+| PhoneNumber              | nvarchar(20)     | INDEX                              | Số điện thoại                  |
+| DateOfBirth              | date             |                                    | Ngày sinh                      |
+| Gender                   | nvarchar(10)     |                                    | Giới tính                      |
+| CustomerTypeId           | int              | FK (CustomerTypes.Id)              | Loại khách hàng                |
+| IsSubscribedToNewsletter | bit              | NOT NULL, DEFAULT(0)               | Đăng ký newsletter             |
+| IsDeleted                | bit              | NOT NULL, DEFAULT(0)               | Trạng thái xóa mềm             |
+| CreatedAt                | datetime2        | NOT NULL, DEFAULT(GETUTCDATE())    | Ngày tạo                       |
+| CreatedBy                | nvarchar(450)    | FK (AspNetUsers.Id)                | Người tạo                      |
+| ModifiedAt               | datetime2        |                                    | Ngày sửa đổi                   |
+| ModifiedBy               | nvarchar(450)    | FK (AspNetUsers.Id)                | Người sửa đổi                  |
+| DeletedAt                | datetime2        |                                    | Ngày xóa                       |
+| DeletedBy                | nvarchar(450)    | FK (AspNetUsers.Id)                | Người xóa                      |
 
-### 16. Addresses
+##### 17. Addresses
 
-| Column Name       | Data Type        | Constraints          | Description                 |
-| ----------------- | ---------------- | -------------------- | --------------------------- |
-| Id                | uniqueidentifier | PK                   | Định danh địa chỉ           |
-| CustomerId        | uniqueidentifier | FK, NOT NULL         | ID khách hàng               |
-| FirstName         | nvarchar(100)    | NOT NULL             | Tên                         |
-| LastName          | nvarchar(100)    | NOT NULL             | Họ                          |
-| AddressLine1      | nvarchar(200)    | NOT NULL             | Địa chỉ dòng 1              |
-| AddressLine2      | nvarchar(200)    |                      | Địa chỉ dòng 2              |
-| City              | nvarchar(100)    | NOT NULL             | Thành phố                   |
-| State             | nvarchar(100)    |                      | Tỉnh/Bang                   |
-| PostalCode        | nvarchar(20)     |                      | Mã bưu điện                 |
-| CountryId         | int              | NOT NULL             | ID quốc gia                 |
-| PhoneNumber       | nvarchar(20)     |                      | Số điện thoại               |
-| IsDefaultShipping | bit              | NOT NULL, DEFAULT(0) | Địa chỉ giao hàng mặc định  |
-| IsDefaultBilling  | bit              | NOT NULL, DEFAULT(0) | Địa chỉ thanh toán mặc định |
-| CreatedAt         | datetime2        | NOT NULL             | Ngày tạo                    |
-| CreatedBy         | nvarchar(450)    |                      | Người tạo                   |
-| ModifiedAt        | datetime2        |                      | Ngày sửa đổi                |
-| ModifiedBy        | nvarchar(450)    |                      | Người sửa đổi               |
+| Column Name       | Data Type        | Constraints                        | Description                 |
+| ----------------- | ---------------- | ---------------------------------- | --------------------------- |
+| Id                | uniqueidentifier | PK                                 | Định danh địa chỉ           |
+| CustomerId        | uniqueidentifier | FK (Customers.Id), NOT NULL, INDEX | ID khách hàng               |
+| FirstName         | nvarchar(100)    | NOT NULL                           | Tên người nhận              |
+| LastName          | nvarchar(100)    | NOT NULL                           | Họ người nhận               |
+| AddressLine1      | nvarchar(200)    | NOT NULL                           | Địa chỉ dòng 1              |
+| AddressLine2      | nvarchar(200)    |                                    | Địa chỉ dòng 2              |
+| City              | nvarchar(100)    | NOT NULL                           | Thành phố                   |
+| State             | nvarchar(100)    |                                    | Tỉnh/Bang                   |
+| PostalCode        | nvarchar(20)     |                                    | Mã bưu điện                 |
+| CountryId         | int              | FK (Countries.Id), NOT NULL        | ID quốc gia                 |
+| PhoneNumber       | nvarchar(20)     |                                    | Số điện thoại người nhận    |
+| IsDefaultShipping | bit              | NOT NULL, DEFAULT(0)               | Địa chỉ giao hàng mặc định  |
+| IsDefaultBilling  | bit              | NOT NULL, DEFAULT(0)               | Địa chỉ thanh toán mặc định |
+| CreatedAt         | datetime2        | NOT NULL, DEFAULT(GETUTCDATE())    | Ngày tạo                    |
+| CreatedBy         | nvarchar(450)    | FK (AspNetUsers.Id)                | Người tạo                   |
+| ModifiedAt        | datetime2        |                                    | Ngày sửa đổi                |
+| ModifiedBy        | nvarchar(450)    | FK (AspNetUsers.Id)                | Người sửa đổi               |
 
-### 17. Countries
+##### 18. Countries (Lookup Table)
 
 | Column Name  | Data Type     | Constraints          | Description          |
 | ------------ | ------------- | -------------------- | -------------------- |
 | Id           | int           | PK                   | Định danh quốc gia   |
 | Name         | nvarchar(100) | NOT NULL             | Tên quốc gia         |
-| IsoCode      | nvarchar(2)   | NOT NULL             | Mã ISO2              |
-| IsoCode3     | nvarchar(3)   |                      | Mã ISO3              |
+| IsoCode      | nvarchar(2)   | NOT NULL, UNIQUE     | Mã ISO2              |
+| IsoCode3     | nvarchar(3)   | UNIQUE               | Mã ISO3              |
 | IsActive     | bit           | NOT NULL, DEFAULT(1) | Trạng thái kích hoạt |
 | DisplayOrder | int           | NOT NULL             | Thứ tự hiển thị      |
 
-### 18. CustomerTypes
+##### 19. CustomerTypes (Lookup Table)
 
 | Column Name        | Data Type     | Constraints | Description               |
 | ------------------ | ------------- | ----------- | ------------------------- |
@@ -1214,163 +1094,146 @@ Dưới đây là các bảng dữ liệu được thiết kế cho ZPX eCommerc
 | Description        | nvarchar(500) |             | Mô tả                     |
 | DiscountPercentage | decimal(5,2)  |             | % giảm giá mặc định       |
 
-## 📦 Inventory & Stock Tables
+#### 📦 Inventory & Stock Tables (Đơn giản hóa - Tồn kho theo ProductVariant)
 
-### 19. Inventory
+##### 20. InventoryHistory (Theo dõi thay đổi tồn kho)
 
-| Column Name      | Data Type        | Constraints          | Description        |
-| ---------------- | ---------------- | -------------------- | ------------------ |
-| Id               | uniqueidentifier | PK                   | Định danh kho      |
-| ProductId        | uniqueidentifier | FK, NOT NULL         | ID sản phẩm        |
-| WarehouseId      | uniqueidentifier | FK, NOT NULL         | ID kho hàng        |
-| StockQuantity    | int              | NOT NULL             | Số lượng tồn       |
-| ReservedQuantity | int              | NOT NULL, DEFAULT(0) | Số lượng đặt trước |
-| CreatedAt        | datetime2        | NOT NULL             | Ngày tạo           |
-| CreatedBy        | nvarchar(450)    |                      | Người tạo          |
-| ModifiedAt       | datetime2        |                      | Ngày sửa đổi       |
-| ModifiedBy       | nvarchar(450)    |                      | Người sửa đổi      |
+| Column Name      | Data Type        | Constraints                              | Description                                  |
+| ---------------- | ---------------- | ---------------------------------------- | -------------------------------------------- |
+| Id               | uniqueidentifier | PK                                       | Định danh lịch sử                            |
+| ProductVariantId | uniqueidentifier | FK (ProductVariants.Id), NOT NULL, INDEX | ID biến thể                                  |
+| WarehouseId      | uniqueidentifier | FK (Warehouses.Id), NOT NULL, INDEX      | ID kho hàng                                  |
+| QuantityChange   | int              | NOT NULL                                 | Thay đổi số lượng (+/-)                      |
+| QuantityBefore   | int              | NOT NULL                                 | Số lượng trước                               |
+| QuantityAfter    | int              | NOT NULL                                 | Số lượng sau                                 |
+| Note             | nvarchar(500)    |                                          | Ghi chú                                      |
+| ReferenceType    | nvarchar(50)     | INDEX                                    | Loại tham chiếu (Order, Stock Adjustment...) |
+| ReferenceId      | nvarchar(128)    | INDEX                                    | ID tham chiếu                                |
+| CreatedAt        | datetime2        | NOT NULL, DEFAULT(GETUTCDATE())          | Ngày tạo                                     |
+| CreatedBy        | nvarchar(450)    | FK (AspNetUsers.Id), NOT NULL            | Người tạo                                    |
 
-### 20. InventoryHistory
+##### 21. Warehouses
 
-| Column Name    | Data Type        | Constraints  | Description       |
-| -------------- | ---------------- | ------------ | ----------------- |
-| Id             | uniqueidentifier | PK           | Định danh lịch sử |
-| ProductId      | uniqueidentifier | FK, NOT NULL | ID sản phẩm       |
-| WarehouseId    | uniqueidentifier | FK, NOT NULL | ID kho hàng       |
-| QuantityChange | int              | NOT NULL     | Thay đổi số lượng |
-| QuantityBefore | int              | NOT NULL     | Số lượng trước    |
-| QuantityAfter  | int              | NOT NULL     | Số lượng sau      |
-| Note           | nvarchar(500)    |              | Ghi chú           |
-| ReferenceType  | nvarchar(50)     |              | Loại tham chiếu   |
-| ReferenceId    | nvarchar(128)    |              | ID tham chiếu     |
-| CreatedAt      | datetime2        | NOT NULL     | Ngày tạo          |
-| CreatedBy      | nvarchar(450)    | NOT NULL     | Người tạo         |
+| Column Name  | Data Type        | Constraints                     | Description          |
+| ------------ | ---------------- | ------------------------------- | -------------------- |
+| Id           | uniqueidentifier | PK                              | Định danh kho hàng   |
+| Name         | nvarchar(200)    | NOT NULL, INDEX                 | Tên kho hàng         |
+| AddressLine1 | nvarchar(200)    | NOT NULL                        | Địa chỉ dòng 1       |
+| AddressLine2 | nvarchar(200)    |                                 | Địa chỉ dòng 2       |
+| City         | nvarchar(100)    | NOT NULL                        | Thành phố            |
+| State        | nvarchar(100)    |                                 | Tỉnh/Bang            |
+| PostalCode   | nvarchar(20)     |                                 | Mã bưu điện          |
+| CountryId    | int              | FK (Countries.Id), NOT NULL     | ID quốc gia          |
+| PhoneNumber  | nvarchar(20)     |                                 | Số điện thoại        |
+| Email        | nvarchar(256)    |                                 | Email                |
+| IsActive     | bit              | NOT NULL, DEFAULT(1)            | Trạng thái kích hoạt |
+| IsDeleted    | bit              | NOT NULL, DEFAULT(0)            | Trạng thái xóa mềm   |
+| CreatedAt    | datetime2        | NOT NULL, DEFAULT(GETUTCDATE()) | Ngày tạo             |
+| CreatedBy    | nvarchar(450)    | FK (AspNetUsers.Id)             | Người tạo            |
+| ModifiedAt   | datetime2        |                                 | Ngày sửa đổi         |
+| ModifiedBy   | nvarchar(450)    | FK (AspNetUsers.Id)             | Người sửa đổi        |
+| DeletedAt    | datetime2        |                                 | Ngày xóa             |
+| DeletedBy    | nvarchar(450)    | FK (AspNetUsers.Id)             | Người xóa            |
 
-### 21. Warehouses
+#### ⭐ Review & Rating Tables
 
-| Column Name  | Data Type        | Constraints          | Description          |
-| ------------ | ---------------- | -------------------- | -------------------- |
-| Id           | uniqueidentifier | PK                   | Định danh kho hàng   |
-| Name         | nvarchar(200)    | NOT NULL             | Tên kho hàng         |
-| AddressLine1 | nvarchar(200)    | NOT NULL             | Địa chỉ dòng 1       |
-| AddressLine2 | nvarchar(200)    |                      | Địa chỉ dòng 2       |
-| City         | nvarchar(100)    | NOT NULL             | Thành phố            |
-| State        | nvarchar(100)    |                      | Tỉnh/Bang            |
-| PostalCode   | nvarchar(20)     |                      | Mã bưu điện          |
-| CountryId    | int              | NOT NULL             | ID quốc gia          |
-| PhoneNumber  | nvarchar(20)     |                      | Số điện thoại        |
-| Email        | nvarchar(256)    |                      | Email                |
-| IsActive     | bit              | NOT NULL, DEFAULT(1) | Trạng thái kích hoạt |
-| CreatedAt    | datetime2        | NOT NULL             | Ngày tạo             |
-| CreatedBy    | nvarchar(450)    |                      | Người tạo            |
-| ModifiedAt   | datetime2        |                      | Ngày sửa đổi         |
-| ModifiedBy   | nvarchar(450)    |                      | Người sửa đổi        |
+##### 22. ProductReviews
 
-## ⭐ Review & Rating Tables
+| Column Name        | Data Type        | Constraints                             | Description          |
+| ------------------ | ---------------- | --------------------------------------- | -------------------- |
+| Id                 | uniqueidentifier | PK                                      | Định danh đánh giá   |
+| ProductId          | uniqueidentifier | FK (Products.Id), NOT NULL, INDEX       | ID sản phẩm          |
+| CustomerId         | uniqueidentifier | FK (Customers.Id), NOT NULL, INDEX      | ID khách hàng        |
+| OrderItemId        | uniqueidentifier | FK (OrderItems.Id), INDEX               | ID mục đơn hàng      |
+| Rating             | int              | NOT NULL, CHECK(Rating BETWEEN 1 AND 5) | Điểm (1-5)           |
+| ReviewText         | nvarchar(max)    |                                         | Nội dung đánh giá    |
+| Title              | nvarchar(200)    |                                         | Tiêu đề đánh giá     |
+| IsApproved         | bit              | NOT NULL, DEFAULT(0)                    | Đã duyệt             |
+| IsVerifiedPurchase | bit              | NOT NULL, DEFAULT(0)                    | Đã xác minh mua hàng |
+| CreatedAt          | datetime2        | NOT NULL, DEFAULT(GETUTCDATE())         | Ngày tạo             |
+| CreatedBy          | nvarchar(450)    | FK (AspNetUsers.Id)                     | Người tạo (nếu có)   |
+| ModifiedAt         | datetime2        |                                         | Ngày sửa đổi         |
+| ModifiedBy         | nvarchar(450)    | FK (AspNetUsers.Id)                     | Người sửa đổi        |
 
-### 22. ProductReviews
+##### 23. ReviewHelpfulness
 
-| Column Name        | Data Type        | Constraints          | Description          |
-| ------------------ | ---------------- | -------------------- | -------------------- |
-| Id                 | uniqueidentifier | PK                   | Định danh đánh giá   |
-| ProductId          | uniqueidentifier | FK, NOT NULL         | ID sản phẩm          |
-| CustomerId         | uniqueidentifier | FK, NOT NULL         | ID khách hàng        |
-| OrderItemId        | uniqueidentifier | FK                   | ID mục đơn hàng      |
-| Rating             | int              | NOT NULL             | Điểm đánh giá (1-5)  |
-| ReviewText         | nvarchar(max)    |                      | Nội dung đánh giá    |
-| Title              | nvarchar(200)    |                      | Tiêu đề đánh giá     |
-| IsApproved         | bit              | NOT NULL, DEFAULT(0) | Đã duyệt             |
-| IsVerifiedPurchase | bit              | NOT NULL, DEFAULT(0) | Đã xác minh mua hàng |
-| CreatedAt          | datetime2        | NOT NULL             | Ngày tạo             |
-| CreatedBy          | nvarchar(450)    |                      | Người tạo            |
-| ModifiedAt         | datetime2        |                      | Ngày sửa đổi         |
-| ModifiedBy         | nvarchar(450)    |                      | Người sửa đổi        |
+| Column Name | Data Type        | Constraints                          | Description   |
+| ----------- | ---------------- | ------------------------------------ | ------------- |
+| ReviewId    | uniqueidentifier | PK, FK (ProductReviews.Id), NOT NULL | ID đánh giá   |
+| CustomerId  | uniqueidentifier | PK, FK (Customers.Id), NOT NULL      | ID khách hàng |
+| IsHelpful   | bit              | NOT NULL                             | Có hữu ích    |
+| CreatedAt   | datetime2        | NOT NULL, DEFAULT(GETUTCDATE())      | Ngày tạo      |
 
-### 23. ReviewHelpfulness
+#### 📢 Marketing Tables
 
-| Column Name | Data Type        | Constraints  | Description   |
-| ----------- | ---------------- | ------------ | ------------- |
-| Id          | uniqueidentifier | PK           | Định danh     |
-| ReviewId    | uniqueidentifier | FK, NOT NULL | ID đánh giá   |
-| CustomerId  | uniqueidentifier | FK, NOT NULL | ID khách hàng |
-| IsHelpful   | bit              | NOT NULL     | Có hữu ích    |
-| CreatedAt   | datetime2        | NOT NULL     | Ngày tạo      |
+##### 24. Discounts
 
-## 📢 Marketing Tables
+| Column Name           | Data Type        | Constraints                     | Description                       |
+| --------------------- | ---------------- | ------------------------------- | --------------------------------- |
+| Id                    | uniqueidentifier | PK                              | Định danh giảm giá                |
+| Name                  | nvarchar(200)    | NOT NULL                        | Tên chương trình                  |
+| Description           | nvarchar(500)    |                                 | Mô tả                             |
+| DiscountType          | int              | NOT NULL, INDEX                 | Loại (Percentage, FixedAmount...) |
+| DiscountValue         | decimal(18,2)    | NOT NULL                        | Giá trị giảm giá (% hoặc số tiền) |
+| MinimumOrderAmount    | decimal(18,2)    |                                 | Giá trị đơn hàng tối thiểu        |
+| MaximumDiscountAmount | decimal(18,2)    |                                 | Giảm giá tối đa (cho loại %)      |
+| StartDate             | datetime2        | NOT NULL                        | Ngày bắt đầu                      |
+| EndDate               | datetime2        |                                 | Ngày kết thúc                     |
+| CouponCode            | nvarchar(50)     | INDEX, UNIQUE                   | Mã giảm giá (nếu có)              |
+| UsesPerCustomer       | int              |                                 | Số lần sử dụng/KH                 |
+| UsesPerCoupon         | int              |                                 | Tổng số lần sử dụng               |
+| IsActive              | bit              | NOT NULL, DEFAULT(1)            | Trạng thái kích hoạt              |
+| CreatedAt             | datetime2        | NOT NULL, DEFAULT(GETUTCDATE()) | Ngày tạo                          |
+| CreatedBy             | nvarchar(450)    | FK (AspNetUsers.Id)             | Người tạo                         |
+| ModifiedAt            | datetime2        |                                 | Ngày sửa đổi                      |
+| ModifiedBy            | nvarchar(450)    | FK (AspNetUsers.Id)             | Người sửa đổi                     |
 
-### 24. Discounts
+##### 25. DiscountUsageHistory
 
-| Column Name           | Data Type        | Constraints          | Description                |
-| --------------------- | ---------------- | -------------------- | -------------------------- |
-| Id                    | uniqueidentifier | PK                   | Định danh giảm giá         |
-| Name                  | nvarchar(200)    | NOT NULL             | Tên chương trình           |
-| Description           | nvarchar(500)    |                      | Mô tả                      |
-| DiscountType          | int              | NOT NULL             | Loại giảm giá              |
-| DiscountValue         | decimal(18,2)    | NOT NULL             | Giá trị giảm giá           |
-| MinimumOrderAmount    | decimal(18,2)    |                      | Giá trị đơn hàng tối thiểu |
-| MaximumDiscountAmount | decimal(18,2)    |                      | Giảm giá tối đa            |
-| StartDate             | datetime2        | NOT NULL             | Ngày bắt đầu               |
-| EndDate               | datetime2        |                      | Ngày kết thúc              |
-| CouponCode            | nvarchar(50)     |                      | Mã giảm giá                |
-| UsesPerCustomer       | int              |                      | Số lần sử dụng/KH          |
-| UsesPerCoupon         | int              |                      | Tổng số lần sử dụng        |
-| IsActive              | bit              | NOT NULL, DEFAULT(1) | Trạng thái kích hoạt       |
-| CreatedAt             | datetime2        | NOT NULL             | Ngày tạo                   |
-| CreatedBy             | nvarchar(450)    |                      | Người tạo                  |
-| ModifiedAt            | datetime2        |                      | Ngày sửa đổi               |
-| ModifiedBy            | nvarchar(450)    |                      | Người sửa đổi              |
+| Column Name | Data Type        | Constraints                        | Description       |
+| ----------- | ---------------- | ---------------------------------- | ----------------- |
+| Id          | uniqueidentifier | PK                                 | Định danh sử dụng |
+| DiscountId  | uniqueidentifier | FK (Discounts.Id), NOT NULL, INDEX | ID giảm giá       |
+| OrderId     | uniqueidentifier | FK (Orders.Id), NOT NULL, INDEX    | ID đơn hàng       |
+| CustomerId  | uniqueidentifier | FK (Customers.Id), NOT NULL, INDEX | ID khách hàng     |
+| CreatedAt   | datetime2        | NOT NULL, DEFAULT(GETUTCDATE())    | Ngày sử dụng      |
 
-### 25. DiscountUsageHistory
+#### 💻 Logging & Audit Tables
 
-| Column Name | Data Type        | Constraints  | Description   |
-| ----------- | ---------------- | ------------ | ------------- |
-| Id          | uniqueidentifier | PK           | Định danh     |
-| DiscountId  | uniqueidentifier | FK, NOT NULL | ID giảm giá   |
-| OrderId     | uniqueidentifier | FK, NOT NULL | ID đơn hàng   |
-| CustomerId  | uniqueidentifier | FK, NOT NULL | ID khách hàng |
-| CreatedAt   | datetime2        | NOT NULL     | Ngày tạo      |
+##### 26. AuditLogs (Theo dõi thay đổi dữ liệu)
 
-## 💻 Logging & Audit Tables
+| Column Name | Data Type        | Constraints                     | Description                        |
+| ----------- | ---------------- | ------------------------------- | ---------------------------------- |
+| Id          | uniqueidentifier | PK                              | Định danh log                      |
+| UserId      | nvarchar(450)    | FK (AspNetUsers.Id), INDEX      | ID người dùng thực hiện            |
+| EntityName  | nvarchar(100)    | NOT NULL, INDEX                 | Tên entity                         |
+| EntityId    | nvarchar(128)    | NOT NULL, INDEX                 | ID entity                          |
+| Action      | nvarchar(50)     | NOT NULL, INDEX                 | Hành động (Create, Update, Delete) |
+| OldValues   | nvarchar(max)    |                                 | Giá trị cũ (JSON)                  |
+| NewValues   | nvarchar(max)    |                                 | Giá trị mới (JSON)                 |
+| ClientIp    | nvarchar(50)     |                                 | Địa chỉ IP client                  |
+| CreatedAt   | datetime2        | NOT NULL, DEFAULT(GETUTCDATE()) | Thời gian                          |
 
-### 26. AuditLogs
+##### 27. ActivityLogs (Theo dõi hoạt động người dùng/hệ thống)
 
-| Column Name | Data Type        | Constraints | Description   |
-| ----------- | ---------------- | ----------- | ------------- |
-| Id          | uniqueidentifier | PK          | Định danh log |
-| UserId      | nvarchar(450)    |             | ID người dùng |
-| EntityName  | nvarchar(100)    | NOT NULL    | Tên entity    |
-| EntityId    | nvarchar(128)    | NOT NULL    | ID entity     |
-| Action      | nvarchar(50)     | NOT NULL    | Hành động     |
-| OldValues   | nvarchar(max)    |             | Giá trị cũ    |
-| NewValues   | nvarchar(max)    |             | Giá trị mới   |
-| ClientIp    | nvarchar(50)     |             | Địa chỉ IP    |
-| CreatedAt   | datetime2        | NOT NULL    | Thời gian     |
-
-### 27. ActivityLogs
-
-| Column Name  | Data Type        | Constraints | Description          |
-| ------------ | ---------------- | ----------- | -------------------- |
-| Id           | uniqueidentifier | PK          | Định danh log        |
-| UserId       | nvarchar(450)    |             | ID người dùng        |
-| ActivityType | nvarchar(100)    | NOT NULL    | Loại hoạt động       |
-| Description  | nvarchar(500)    |             | Mô tả                |
-| EntityName   | nvarchar(100)    |             | Tên entity           |
-| EntityId     | nvarchar(128)    |             | ID entity            |
-| IpAddress    | nvarchar(50)     |             | Địa chỉ IP           |
-| UserAgent    | nvarchar(500)    |             | Trình duyệt/thiết bị |
-| CreatedAt    | datetime2        | NOT NULL    | Thời gian            |
-
-## 📊 Mối quan hệ chính
-
-1. **Products** ↔ **Categories**: Mỗi sản phẩm thuộc một danh mục
-2. **Products** ↔ **Brands**: Mỗi sản phẩm thuộc một thương hiệu
-3. **Products** ↔ **ProductImages**: Một sản phẩm có nhiều hình ảnh
-4. **Products** ↔ **ProductAttributes**: Một sản phẩm có nhiều thuộc tính
-5. **Products** ↔ **Inventory**: Một sản phẩm có nhiều bản ghi tồn kho
-6. **Products** ↔ **OrderItems**: Một sản phẩm có thể xuất hiện trong nhiều đơn hàng
-7. **Orders** ↔ **OrderItems**: Một đơn hàng có nhiều mục
-8. **Orders** ↔ **Customers**: Mỗi đơn hàng thuộc về một khách hàng
-9. **Customers** ↔ **Addresses**: Một khách hàng có nhiều địa chỉ
-10. **Customers** ↔ **AspNetUsers**: Một khách hàng có thể liên kết với một tài khoản
+| Column Name  | Data Type        | Constraints                     | Description                             |
+| ------------ | ---------------- | ------------------------------- | --------------------------------------- |
+| Id           | uniqueidentifier | PK                              | Định danh log                           |
+| UserId       | nvarchar(450)    | FK (AspNetUsers.Id), INDEX      | ID người dùng                           |
+| ActivityType | nvarchar(100)    | NOT NULL, INDEX                 | Loại hoạt động (Login, View Product...) |
+| Description  | nvarchar(500)    |                                 | Mô tả chi tiết                          |
+| EntityName   | nvarchar(100)    | INDEX                           | Tên entity liên quan                    |
+| EntityId     | nvarchar(128)    | INDEX                           | ID entity liên quan                     |
+| IpAddress    | nvarchar(50)     |                                 | Địa chỉ IP                              |
+| UserAgent    | nvarchar(500)    |                                 | Trình duyệt/thiết bị                    |
+| CreatedAt    | datetime2        | NOT NULL, DEFAULT(GETUTCDATE()) | Thời gian                               |
 
 ---
+
+## 9. ✅ PHÊ DUYỆT
+
+| Vai trò       | Tên            | Chữ ký | Ngày       |
+| ------------- | -------------- | ------ | ---------- |
+| Người yêu cầu | phamtiendungcw | ✓      | 2025-04-15 |
+| Quản lý dự án | phamtiendungcw | ✓      | 2025-04-15 |
+| Developer     | phamtiendungcw | ✓      | 2025-04-15 |
